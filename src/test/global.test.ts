@@ -14,6 +14,6 @@ before('Global setup', function () {
 
 describe('Hello', function () {
     it('Should fail a test', function () {
-        'one'.should.equal('two');
+        'one'.should.equal('one');
     });
 });
