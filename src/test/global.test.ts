@@ -13,7 +13,7 @@ before('Global setup', function () {
 });
 
 describe('Hello', function () {
-    it('Should run a test', function () {
-        'one'.should.equal('one');
+    it('Should fail a test', function () {
+        'one'.should.equal('two');
     });
 });
