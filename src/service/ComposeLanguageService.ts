@@ -33,14 +33,13 @@ import {
     TextDocumentSyncKind
 }
     from 'vscode-languageserver/node';
-import { Document, parseDocument } from 'yaml';
-import { Pair, Scalar, YAMLMap } from 'yaml/dist/ast';
+import { Document, parseDocument, isMap, isScalar } from 'yaml';
 import { cstRangeToLspRange } from './utils/cstRangeToLspRange';
 import { debounce } from './utils/debounce';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-    private readonly documentCache: { [uri: string]: Document.Parsed } = {};
+    private readonly documentCache: { [uri: string]: Document } = {};
     private readonly subscriptions: Disposable[] = [];
 
     public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
@@ -129,13 +128,15 @@ export class ComposeLanguageService implements Disposable {
         }
 
         const results: DocumentLink[] = [];
-        const services = (doc.contents as YAMLMap)?.get('services')?.items?.map((pair: Pair) => pair?.value) as YAMLMap[] ?? [];
-
-        for (const service of services) {
-            const image = service?.get('image', true) as Scalar | undefined;
-
-            if (typeof image?.value === 'string') {
-                results.push(DocumentLink.create(cstRangeToLspRange(textDoc, image.range), 'https://microsoft.com'));
+        const serviceMap = doc?.getIn(['services']);
+        if (isMap(serviceMap)) {
+            for (const service of serviceMap.items) {
+                if (isMap(service.value)) {
+                    const image = service.value.getIn(['image'], true);
+                    if (isScalar(image) && typeof image.value === 'string') {
+                        results.push(DocumentLink.create(cstRangeToLspRange(textDoc, image.range), 'https://microsoft.com'));
+                    }
+                }
             }
         }
 
@@ -159,9 +160,10 @@ export class ComposeLanguageService implements Disposable {
             for (const error of [...this.documentCache[document.uri].errors, ...this.documentCache[document.uri].warnings]) {
                 diagnostics.push(
                     Diagnostic.create(
-                        cstRangeToLspRange(document, [error.offset, error.offset]), // TODO: range?
+                        cstRangeToLspRange(document, error.pos), // TODO: range?
                         error.message,
-                        error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error
+                        error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+                        error.code
                     )
                 );
             }
