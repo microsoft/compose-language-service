@@ -42,19 +42,22 @@ export class ComposeLanguageService implements Disposable {
     private readonly documentCache: { [uri: string]: Document } = {};
     private readonly subscriptions: Disposable[] = [];
 
-    public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
+    public constructor(private readonly clientParams: InitializeParams, private readonly connection?: Connection) {
         // Hook up the document listener, which creates a Disposable which will be added to this.subscriptions
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
 
-        // Hook up all the LSP listeners, which do not create Disposables
-        this.createLspHandler(this.connection.onCompletion, this.onCompletion);
-        this.createLspHandler(this.connection.onHover, this.onHover);
-        this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
-        this.createLspHandler(this.connection.onDocumentLinks, this.onDocumentLinks);
-        this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
+        // TODO: work out a better way to test than making the connection optional
+        if (this.connection) {
+            // Hook up all the LSP listeners, which do not create Disposables
+            this.createLspHandler(this.connection.onCompletion, this.onCompletion);
+            this.createLspHandler(this.connection.onHover, this.onHover);
+            this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
+            this.createLspHandler(this.connection.onDocumentLinks, this.onDocumentLinks);
+            this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
 
-        // Start the document listener
-        this.documentManager.listen(this.connection);
+            // Start the document listener
+            this.documentManager.listen(this.connection);
+        }
     }
 
     public dispose(): void {
@@ -168,7 +171,8 @@ export class ComposeLanguageService implements Disposable {
                 );
             }
 
-            this.connection.sendDiagnostics({
+            // TODO: work out a better way to test than making the connection optional
+            this.connection?.sendDiagnostics({
                 uri: document.uri,
                 diagnostics: diagnostics,
             });
