@@ -16,7 +16,7 @@ before('Global setup', function () {
 
 describe('Hello', function () {
     it('Should run a test', function () {
-        const doc = parseDocument(fs.readFileSync('D:\\compose-language-service\\src\\test\\samples\\docker-compose.yml', { encoding: 'utf-8' }));
+        const doc = parseDocument(fs.readFileSync('src/test/samples/docker-compose.yml', { encoding: 'utf-8' }));
 
         const serviceMap = doc.getIn(['services']);
         if (isMap(serviceMap)) {
