@@ -163,7 +163,7 @@ export class ComposeLanguageService implements Disposable {
             for (const error of [...this.documentCache[document.uri].errors, ...this.documentCache[document.uri].warnings]) {
                 diagnostics.push(
                     Diagnostic.create(
-                        cstRangeToLspRange(document, error.pos), // TODO: range?
+                        cstRangeToLspRange(document, error.pos),
                         error.message,
                         error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
                         error.code
