@@ -9,20 +9,20 @@ import { ComposeLanguageService } from '../service/ComposeLanguageService';
 import { DefaultInitializeParams } from './DefaultInitializeParams';
 
 export class TestConnection {
-    public readonly client: Connection;
     public readonly server: Connection;
+    public readonly client: Connection;
     public readonly languageService: ComposeLanguageService;
 
     public constructor(public readonly initParams: InitializeParams = DefaultInitializeParams) {
         const up = new PassThrough();
         const down = new PassThrough();
 
-        this.client = createConnection(up, down);
-        this.server = createConnection(down, up);
+        this.server = createConnection(up, down);
+        this.client = createConnection(down, up);
 
         this.languageService = new ComposeLanguageService(this.server, initParams);
 
-        this.client.listen();
         this.server.listen();
+        this.client.listen();
     }
 }
