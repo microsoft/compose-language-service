@@ -1,0 +1,21 @@
+{
+    "tool": "Credential Scanner",
+    "suppressions": [
+        {
+            "file": "node_modules\\enquirer\\README.md",
+            "_justification": "No need to scan external node modules."
+        },
+        {
+            "file": "node_modules\\ini\\README.md",
+            "_justification": "No need to scan external node modules."
+        },
+        {
+            "file": "node_modules\\keytar\\README.md",
+            "_justification": "No need to scan external node modules."
+        },
+        {
+            "hash": "w/yYaqoTFu/NCkKHDlTys3CUaiD1oUfPeYtWpI04Bws=",
+            "_justification": "This code is adding an auth header to a request, it is not a secret."
+        }
+    ]
+}
