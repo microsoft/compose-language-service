@@ -25,6 +25,6 @@ describe('(Unit) `image:` tag', () => {
         };
 
         const result = await testConnection.client.sendRequest(DocumentLinkRequest.type, params) as DocumentLink[];
-        expect(result).to.not.be.undefined;
+        expect(result).to.be.ok;
     });
 });
