@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  commonwithtag:
+    image: alpine:latest
+
+  commonnotag:
+    image: mysql
+
+  namespacewithtag:
+    image: library/alpine:latest
+
+  namespacenotag:
+    image: library/mysql
+
+  mcrwithtag:
+    image: mcr.microsoft.com/dotnet/sdk:5.0
+
+  mcrnotag:
+    image: mcr.microsoft.com/dotnet/sdk
+
+  mcrnamespacewithtag:
+    image: mcr.microsoft.com/dotnet/core/sdk:5.0
+
+  mcrnamespacenotag:
+    image: mcr.microsoft.com/dotnet/core/sdk
+
+  buildwithtag:
+    image: buildcanary:latest
+    build: .
+
+  otherhost:
+    image: a.b/hostcanary:tag
+
+  anotherhost:
+    image: a.b/ns/anotherhost:tag
+
+  multinamespace:
+    image: a/b/multinscanary:tag
+
+  noimage:
+    build: .

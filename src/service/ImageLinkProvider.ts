@@ -8,9 +8,9 @@ import { isMap, isScalar } from 'yaml';
 import { ProviderParams } from './ProviderParams';
 import { cstRangeToLspRange } from './utils/cstRangeToLspRange';
 
-const dockerHubImageRegex = /^(?<image>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
-const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<image>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
-const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>[a-z0-9]+\/)+(?<image>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
+const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
+const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
+const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
 export class ImageLinkProvider {
     public static async onDocumentLinks(params: DocumentLinkParams & ProviderParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
@@ -40,27 +40,27 @@ export class ImageLinkProvider {
         let namespace: string | undefined;
         let imageName: string | undefined;
         if ((match = dockerHubImageRegex.exec(image)) &&
-            (imageName = match.groups?.['image'])) {
+            (imageName = match.groups?.['imageName'])) {
             return {
-                uri: `https://hub.docker.com/_/${image}`,
+                uri: `https://hub.docker.com/_/${imageName}`,
                 start: 0,
-                length: image.length
+                length: imageName.length
             };
         } else if ((match = dockerHubNamespacedImageRegex.exec(image)) &&
             (namespace = match.groups?.['namespace']) &&
-            (imageName = match.groups?.['image'])) {
+            (imageName = match.groups?.['imageName'])) {
             return {
                 uri: `https://hub.docker.com/r/${namespace}/${imageName}`,
                 start: 0,
-                length: namespace.length + imageName.length
+                length: namespace.length + 1 + imageName.length // 1 is the length of the '/' after namespace
             };
         } else if ((match = mcrImageRegex.exec(image)) &&
-            (namespace = match.groups?.['namespace']) &&
-            (imageName = match.groups?.['image'])) {
+            (namespace = match.groups?.['namespace']?.replace(/\/$/, '')) &&
+            (imageName = match.groups?.['imageName'])) {
             return {
-                uri: `https://hub.docker.com/_/microsoft-${namespace.replace('/', '-')}/${imageName}`,
+                uri: `https://hub.docker.com/_/microsoft-${namespace.replace('/', '-')}-${imageName}`,
                 start: 0,
-                length: 18 + namespace.length + imageName.length // 18 is the length of 'mcr.microsoft.com/'
+                length: 18 + namespace.length + 1 + imageName.length // 18 is the length of 'mcr.microsoft.com/', 1 is the length of the '/' after namespace
             };
         }
         return undefined;
