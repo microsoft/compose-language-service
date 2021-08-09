@@ -4,27 +4,47 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { expect } from 'chai';
-import * as fs from 'fs';
-import { DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DocumentLink, DocumentLinkParams, DocumentLinkRequest, TextDocumentItem } from 'vscode-languageserver';
-import { TestConnection } from './TestConnection';
+import { DocumentLink, DocumentLinkParams, DocumentLinkRequest } from 'vscode-languageserver';
+import { DocumentUri } from 'vscode-languageserver-textdocument';
+import { TestConnection } from './utils/TestConnection';
 
 describe('(Unit) `image:` tag', () => {
     const testConnection = new TestConnection();
+    let sampleFileUri: DocumentUri;
 
-    before(async () => {
-        const openParams: DidOpenTextDocumentParams = {
-            textDocument: TextDocumentItem.create('file:///foo.bar', 'dockercompose', 1, fs.readFileSync('src/test/samples/docker-compose.yml', { encoding: 'utf-8' })),
-        };
-
-        testConnection.client.sendNotification(DidOpenTextDocumentNotification.type, openParams);
+    before('Populate the language server with a compose document', async () => {
+        sampleFileUri = await testConnection.preloadSampleFile('imageLinks/docker-compose.yml');
     });
 
-    it('Should provide links for general images', async () => {
+    it('Should provide links for general Docker Hub images', async () => {
         const params: DocumentLinkParams = {
-            textDocument: { uri: 'file:///foo.bar' }
+            textDocument: { uri: sampleFileUri }
         };
 
         const result = await testConnection.client.sendRequest(DocumentLinkRequest.type, params) as DocumentLink[];
         expect(result).to.be.ok;
+        result.should.not.be.empty;
+    });
+
+    it('Should provide links for namespaced Docker Hub images', async () => {
+        const params: DocumentLinkParams = {
+            textDocument: { uri: sampleFileUri }
+        };
+
+        const result = await testConnection.client.sendRequest(DocumentLinkRequest.type, params) as DocumentLink[];
+        expect(result).to.be.ok;
+    });
+
+    it('Should provide links for MCR images', async () => {
+        const params: DocumentLinkParams = {
+            textDocument: { uri: sampleFileUri }
+        };
+
+        const result = await testConnection.client.sendRequest(DocumentLinkRequest.type, params) as DocumentLink[];
+        expect(result).to.be.ok;
+    });
+
+    after('Cleanup', () => {
+        testConnection.dispose();
     });
 });
