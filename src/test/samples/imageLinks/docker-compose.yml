@@ -10,3 +10,13 @@ services:
       - 8080:80
     environment:
       - FOO=BAR
+
+  second:
+    image: alpine:latest
+    entrypoint: tail -f /dev/null
+    volumes:
+      - ~:/homedir:rw
+    ports:
+      - 8080:80
+    environment:
+      - FOO=BAR

@@ -12,8 +12,6 @@ import {
     Diagnostic,
     DiagnosticSeverity,
     Disposable,
-    DocumentLink,
-    DocumentLinkParams,
     ErrorCodes,
     Event,
     Hover,
@@ -29,13 +27,16 @@ import {
     SignatureHelp,
     SignatureHelpParams,
     TextDocumentChangeEvent,
+    TextDocumentIdentifier,
     TextDocuments,
     TextDocumentSyncKind
 }
-    from 'vscode-languageserver/node';
-import { Document, parseDocument, isMap, isScalar } from 'yaml';
+    from 'vscode-languageserver';
+import { Document, parseDocument } from 'yaml';
 import { cstRangeToLspRange } from './utils/cstRangeToLspRange';
 import { debounce } from './utils/debounce';
+import { ImageLinkProvider } from './ImageLinkProvider';
+import { ProviderParams } from './ProviderParams';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -47,11 +48,11 @@ export class ComposeLanguageService implements Disposable {
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
 
         // Hook up all the LSP listeners, which do not create Disposables
-        this.createLspHandler(this.connection.onCompletion, this.onCompletion);
-        this.createLspHandler(this.connection.onHover, this.onHover);
-        this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
-        this.createLspHandler(this.connection.onDocumentLinks, this.onDocumentLinks);
-        this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
+        // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
+        // this.createLspHandler(this.connection.onHover, this.onHover);
+        // this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
+        this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
+        // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
 
         // Start the document listener
         this.documentManager.listen(this.connection);
@@ -120,29 +121,6 @@ export class ComposeLanguageService implements Disposable {
         return undefined;
     }
 
-    public async onDocumentLinks(params: DocumentLinkParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
-        const doc = this.documentCache[params.textDocument.uri];
-        const textDoc = this.documentManager.get(params.textDocument.uri);
-        if (!doc || !textDoc) {
-            throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
-        }
-
-        const results: DocumentLink[] = [];
-        const serviceMap = doc?.getIn(['services']);
-        if (isMap(serviceMap)) {
-            for (const service of serviceMap.items) {
-                if (isMap(service.value)) {
-                    const image = service.value.getIn(['image'], true);
-                    if (isScalar(image) && typeof image.value === 'string') {
-                        results.push(DocumentLink.create(cstRangeToLspRange(textDoc, image.range), 'https://microsoft.com'));
-                    }
-                }
-            }
-        }
-
-        return results;
-    }
-
     public async onSemanticTokens(params: SemanticTokensParams, token: CancellationToken): Promise<SemanticTokens> {
         const builder = new SemanticTokensBuilder();
         return builder.build();
@@ -175,12 +153,19 @@ export class ComposeLanguageService implements Disposable {
         }, this);
     }
 
-    private createLspHandler<P, R, PR, E>(event: (handler: ServerRequestHandler<P, R, PR, E>) => void, handler: ServerRequestHandler<P, R, PR, E>): void {
-        const boundHandler = handler.bind(this);
-
+    private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
+        event: (handler: ServerRequestHandler<P, R, PR, E>) => void,
+        handler: ServerRequestHandler<P & ProviderParams, R, PR, E>
+    ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
             try {
-                return await boundHandler(params, token, workDoneProgress, resultProgress);
+                const parsedDocument = this.documentCache[params.textDocument.uri];
+                const textDocument = this.documentManager.get(params.textDocument.uri);
+                if (!parsedDocument || !textDocument) {
+                    throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
+                }
+
+                return await handler({ ...params, parsedDocument, textDocument }, token, workDoneProgress, resultProgress);
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
@@ -193,7 +178,10 @@ export class ComposeLanguageService implements Disposable {
         });
     }
 
-    private createDocumentManagerHandler(event: Event<TextDocumentChangeEvent<TextDocument>>, handler: (params: TextDocumentChangeEvent<TextDocument>) => Promise<void>): void {
+    private createDocumentManagerHandler(
+        event: Event<TextDocumentChangeEvent<TextDocument>>,
+        handler: (params: TextDocumentChangeEvent<TextDocument>) => Promise<void>
+    ): void {
         event(async (params: TextDocumentChangeEvent<TextDocument>) => {
             try {
                 return await handler.call(this, params);
