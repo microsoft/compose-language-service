@@ -162,12 +162,10 @@ describe('ImageLinkProvider', () => {
             const testObject = {
                 services: {
                     a: {
-                        image: 'foo.bar/alpine',
-                        build: '.'
+                        image: 'foo.bar/alpine'
                     },
                     b: {
-                        image: 'foo:1234/alpine',
-                        build: '.'
+                        image: 'foo:1234/alpine'
                     },
                 }
             };
@@ -191,7 +189,7 @@ describe('ImageLinkProvider', () => {
             const testObject = {
                 services: {
                     a: {
-                        build: '.'
+                        'container_name': 'a'
                     },
                 }
             };
