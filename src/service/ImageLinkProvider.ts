@@ -6,7 +6,7 @@
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
 import { isMap, isScalar } from 'yaml';
 import { ProviderParams } from './ProviderParams';
-import { cstRangeToLspRange } from './utils/cstRangeToLspRange';
+import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
@@ -25,7 +25,7 @@ export class ImageLinkProvider {
                         const link = ImageLinkProvider.getLinkForImage(image.value);
 
                         if (link && image.range) {
-                            results.push(DocumentLink.create(cstRangeToLspRange(params.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
+                            results.push(DocumentLink.create(yamlRangeToLspRange(params.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
                         }
                     }
                 }

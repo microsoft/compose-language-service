@@ -32,15 +32,15 @@ import {
     TextDocumentSyncKind
 }
     from 'vscode-languageserver';
-import { Document, parseDocument } from 'yaml';
-import { cstRangeToLspRange } from './utils/cstRangeToLspRange';
+import { Document as YamlDocument, parseDocument } from 'yaml';
+import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 import { debounce } from './utils/debounce';
 import { ImageLinkProvider } from './ImageLinkProvider';
 import { ProviderParams } from './ProviderParams';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-    private readonly documentCache: { [uri: string]: Document } = {};
+    private readonly documentCache: { [uri: string]: YamlDocument } = {};
     private readonly subscriptions: Disposable[] = [];
 
     public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
@@ -140,7 +140,7 @@ export class ComposeLanguageService implements Disposable {
             for (const error of [...this.documentCache[document.uri].errors, ...this.documentCache[document.uri].warnings]) {
                 diagnostics.push(
                     Diagnostic.create(
-                        cstRangeToLspRange(document, error.pos),
+                        yamlRangeToLspRange(document, error.pos),
                         error.message,
                         error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
                         error.code
