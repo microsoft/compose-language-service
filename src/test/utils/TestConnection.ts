@@ -3,13 +3,11 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { PassThrough } from 'stream';
 import { Connection, DidOpenTextDocumentNotification, DidOpenTextDocumentParams, Disposable, InitializeParams, TextDocumentItem } from 'vscode-languageserver';
 import { DocumentUri } from 'vscode-languageserver-textdocument';
 import { createConnection } from 'vscode-languageserver/node';
-import { URI } from 'vscode-uri';
+import { Document } from 'yaml';
 import { ComposeLanguageService } from '../../service/ComposeLanguageService';
 import { DefaultInitializeParams } from './DefaultInitializeParams';
 
@@ -17,6 +15,7 @@ export class TestConnection implements Disposable {
     public readonly server: Connection;
     public readonly client: Connection;
     public readonly languageService: ComposeLanguageService;
+    private counter = 0;
 
     public constructor(public readonly initParams: InitializeParams = DefaultInitializeParams) {
         const up = new PassThrough();
@@ -37,15 +36,16 @@ export class TestConnection implements Disposable {
         this.client?.dispose();
     }
 
-    public async preloadSampleFile(sampleFileRelativePath: string): Promise<DocumentUri> {
-        const sampleFileUri = URI.file(path.join(process.cwd(), 'src', 'test', 'samples', path.normalize(sampleFileRelativePath)));
-        const sampleFileContent = fs.readFileSync(sampleFileUri.fsPath, { encoding: 'utf-8' });
+    public sendObjectAsYamlDocument(object: unknown): DocumentUri {
+        const yamlInput = new Document(object);
+        const uri = `file:///a${this.counter++}`;
 
         const openParams: DidOpenTextDocumentParams = {
-            textDocument: TextDocumentItem.create(sampleFileUri.toString(), 'dockercompose', 1, sampleFileContent),
+            textDocument: TextDocumentItem.create(uri, 'dockercompose', 1, yamlInput.toString()),
         };
-        this.client.sendNotification(DidOpenTextDocumentNotification.type, openParams);
 
-        return sampleFileUri.toString();
+        this.client.sendNotification(DidOpenTextDocumentNotification.type, openParams);
+        return uri;
     }
+
 }
