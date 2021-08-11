@@ -100,13 +100,13 @@ describe('ImageLinkProvider', () => {
                         image: 'mcr.microsoft.com/dotnet/sdk'
                     },
                     b: {
-                        image: 'mcr.microsoft.com/dotnet/aspnet:latest'
+                        image: 'mcr.microsoft.com/dotnet/aspnet:5.0'
                     },
                     c: {
                         image: 'mcr.microsoft.com/dotnet/core/sdk'
                     },
                     d: {
-                        image: 'mcr.microsoft.com/dotnet/core/aspnet:latest'
+                        image: 'mcr.microsoft.com/dotnet/core/aspnet:5.0'
                     },
                 }
             };
