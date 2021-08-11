@@ -5,27 +5,27 @@
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-    CancellationToken,
-    CompletionItem,
-    CompletionParams,
+    // CancellationToken,
+    // CompletionItem,
+    // CompletionParams,
     Connection,
     Diagnostic,
     DiagnosticSeverity,
     Disposable,
     ErrorCodes,
     Event,
-    Hover,
-    HoverParams,
+    // Hover,
+    // HoverParams,
     InitializeParams,
     ResponseError,
-    SemanticTokens,
-    SemanticTokensBuilder,
-    SemanticTokensParams,
+    // SemanticTokens,
+    // SemanticTokensBuilder,
+    // SemanticTokensParams,
     // SemanticTokenTypes,
     ServerCapabilities,
     ServerRequestHandler,
-    SignatureHelp,
-    SignatureHelpParams,
+    // SignatureHelp,
+    // SignatureHelpParams,
     TextDocumentChangeEvent,
     TextDocumentIdentifier,
     TextDocuments,
@@ -98,17 +98,18 @@ export class ComposeLanguageService implements Disposable {
     }
 
     public async onDidChangeContent(changed: TextDocumentChangeEvent<TextDocument>): Promise<void> {
-        const cst = parseDocument(changed.document.getText(), { prettyErrors: true });
+        const parsedDocument = parseDocument(changed.document.getText(), { prettyErrors: true });
 
-        if (!cst) {
+        if (!parsedDocument) {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
 
-        this.documentCache[changed.document.uri] = cst;
+        this.documentCache[changed.document.uri] = parsedDocument;
 
         this.sendDiagnostics(changed.document);
     }
 
+    /*
     public async onCompletion(params: CompletionParams, token: CancellationToken): Promise<CompletionItem[] | undefined> {
         return undefined;
     }
@@ -125,6 +126,7 @@ export class ComposeLanguageService implements Disposable {
         const builder = new SemanticTokensBuilder();
         return builder.build();
     }
+    */
 
     public sendDiagnostics(document: TextDocument): void {
         if (!this.clientParams.capabilities.textDocument?.publishDiagnostics) {
