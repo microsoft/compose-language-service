@@ -4,33 +4,32 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
-import { isMap, isScalar } from 'yaml';
-import { ProviderParams } from './ProviderParams';
-import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
+import { CachedDocument } from './CachedDocument';
+// import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
 export class ImageLinkProvider {
-    public static async onDocumentLinks(params: DocumentLinkParams & ProviderParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
+    public static async onDocumentLinks(params: DocumentLinkParams & { cachedDocument: CachedDocument }, token: CancellationToken): Promise<DocumentLink[] | undefined> {
         const results: DocumentLink[] = [];
-        const serviceMap = params.parsedDocument.getIn(['services']);
-        if (isMap(serviceMap)) {
-            for (const service of serviceMap.items) {
-                if (isMap(service.value)) {
-                    const image = service.value.getIn(['image'], true);
-                    const hasBuild = service.value.has('build');
-                    if (!hasBuild && isScalar(image) && typeof image.value === 'string') {
-                        const link = ImageLinkProvider.getLinkForImage(image.value);
+        // const serviceMap = params.parsedDocument.getIn(['services']);
+        // if (isMap(serviceMap)) {
+        //     for (const service of serviceMap.items) {
+        //         if (isMap(service.value)) {
+        //             const image = service.value.getIn(['image'], true);
+        //             const hasBuild = service.value.has('build');
+        //             if (!hasBuild && isScalar(image) && typeof image.value === 'string') {
+        //                 const link = ImageLinkProvider.getLinkForImage(image.value);
 
-                        if (link && image.range) {
-                            results.push(DocumentLink.create(yamlRangeToLspRange(params.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
-                        }
-                    }
-                }
-            }
-        }
+        //                 if (link && image.range) {
+        //                     results.push(DocumentLink.create(yamlRangeToLspRange(params.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         return results;
     }

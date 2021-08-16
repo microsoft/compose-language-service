@@ -4,9 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Document } from 'yaml';
+import { CST, Document as YamlDocument } from 'yaml';
 
-export interface ProviderParams {
-    parsedDocument: Document,
-    textDocument: TextDocument,
+export interface CachedDocument {
+    textDocument: TextDocument;
+    cst: CST.Document;
+    yamlDocument: YamlDocument;
 }
