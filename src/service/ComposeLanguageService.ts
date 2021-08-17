@@ -12,6 +12,7 @@ import {
     Diagnostic,
     DiagnosticSeverity,
     Disposable,
+    DocumentLinkParams,
     ErrorCodes,
     Event,
     // Hover,
@@ -37,6 +38,7 @@ import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 import { debounce } from './utils/debounce';
 import { ImageLinkProvider } from './ImageLinkProvider';
 import { CachedDocument } from './CachedDocument';
+import { EventCollector } from './utils/EventCollector';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -46,6 +48,9 @@ export class ComposeLanguageService implements Disposable {
     public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listener, which creates a Disposable which will be added to this.subscriptions
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
+
+        const collector = new EventCollector<DocumentLinkParams>();
+        this.connection.onDocumentLinks((params) => collector.fire(params))
 
         // Hook up all the LSP listeners, which do not create Disposables
         // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
