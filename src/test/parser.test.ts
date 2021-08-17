@@ -28,7 +28,7 @@ foo:
     : [ 2001-07-02, 2001-08-12, 2001-08-14]
 `;
 
-describe('CST playground', () => {
+describe.skip('CST playground', () => {
     it('Should test', async () => {
         const [parsed] = new Parser().parse(doc) as unknown as [CST.Document];
 
@@ -41,5 +41,6 @@ describe('CST playground', () => {
         });
 
         const foobar = parseDocument(doc, { prettyErrors: false });
+        console.log(foobar);
     });
 });
