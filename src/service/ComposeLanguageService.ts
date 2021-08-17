@@ -12,7 +12,6 @@ import {
     Diagnostic,
     DiagnosticSeverity,
     Disposable,
-    DocumentLinkParams,
     ErrorCodes,
     Event,
     // Hover,
@@ -38,7 +37,6 @@ import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 import { debounce } from './utils/debounce';
 import { ImageLinkProvider } from './ImageLinkProvider';
 import { CachedDocument } from './CachedDocument';
-import { EventCollector } from './utils/EventCollector';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -49,8 +47,6 @@ export class ComposeLanguageService implements Disposable {
         // Hook up the document listener, which creates a Disposable which will be added to this.subscriptions
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
 
-        const collector = new EventCollector<DocumentLinkParams>();
-        this.connection.onDocumentLinks((params) => collector.fire(params))
 
         // Hook up all the LSP listeners, which do not create Disposables
         // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
@@ -103,14 +99,14 @@ export class ComposeLanguageService implements Disposable {
     }
 
     public async onDidChangeContent(changed: TextDocumentChangeEvent<TextDocument>): Promise<void> {
-        const cst = new Parser().parse(changed.document.getText());
-        const [cstDocument] = cst;
+        const tokens = new Parser().parse(changed.document.getText());
+        const [cstDocument] = tokens;
+        const composedTokens = new Composer().compose([cstDocument]);
+        const [parsedDocument] = composedTokens;
 
         if (cstDocument.type !== 'document') {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
-
-        const parsedDocument = new Composer().compose(cst);
 
         if (!isDocument(parsedDocument)) {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
@@ -150,7 +146,7 @@ export class ComposeLanguageService implements Disposable {
         }
 
         // Diagnostics will be sent half a second after the changes stop
-        debounce(500, { uri: cachedDocument.textDocument.uri, callId: 'parse' }, async () => {
+        debounce(500, { uri: cachedDocument.textDocument.uri, callId: 'diagnostics' }, async () => {
             const diagnostics: Diagnostic[] = [];
 
             for (const error of [...cachedDocument.yamlDocument.errors, ...cachedDocument.yamlDocument.warnings]) {
@@ -183,7 +179,7 @@ export class ComposeLanguageService implements Disposable {
                     throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
                 }
 
-                return await handler({ ...params, cachedDocument, textDocument }, token, workDoneProgress, resultProgress);
+                return await handler.call(this, { ...params, cachedDocument, textDocument }, token, workDoneProgress, resultProgress);
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;

@@ -4,8 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
+import { isMap, isScalar } from 'yaml';
 import { CachedDocument } from './CachedDocument';
-// import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
+import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
@@ -14,22 +15,59 @@ const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageN
 export class ImageLinkProvider {
     public static async onDocumentLinks(params: DocumentLinkParams & { cachedDocument: CachedDocument }, token: CancellationToken): Promise<DocumentLink[] | undefined> {
         const results: DocumentLink[] = [];
-        // const serviceMap = params.parsedDocument.getIn(['services']);
-        // if (isMap(serviceMap)) {
-        //     for (const service of serviceMap.items) {
-        //         if (isMap(service.value)) {
-        //             const image = service.value.getIn(['image'], true);
-        //             const hasBuild = service.value.has('build');
-        //             if (!hasBuild && isScalar(image) && typeof image.value === 'string') {
-        //                 const link = ImageLinkProvider.getLinkForImage(image.value);
 
-        //                 if (link && image.range) {
-        //                     results.push(DocumentLink.create(yamlRangeToLspRange(params.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
+        // CST.visit(params.cachedDocument.cst, (item, path) => {
+        //     switch (path.length) {
+        //         case 0:
+        //             // At the root of the document, just keep going
+        //             return;
+        //         case 1:
+        //             // We only care about image links under `services`. If the path length is 1 and the key is anything other than `services`, skip
+        //             if (CST.isScalar(item.key) && item.key.source !== 'services') {
+        //                 return CST.visit.SKIP;
+        //             }
+        //             // Otherwise, keep going
+        //             return;
+        //         case 2:
+        //             return;
+        //         case 3:
+        //             if (CST.isScalar(item.key) && item.key.source === 'image' && CST.isScalar(item.value)) {
+        //                 // We're at an image node
+        //                 const imageName = item.value.source;
+        //                 const link = ImageLinkProvider.getLinkForImage(imageName, item.value.offset);
+
+        //                 if (link) {
+        //                     results.push(
+        //                         DocumentLink.create(
+        //                             yamlRangeToLspRange(params.cachedDocument.textDocument, [link.start, link.end]),
+        //                             link.uri
+        //                         )
+        //                     );
         //                 }
         //             }
-        //         }
+        //             // Keep going
+        //             return;
+        //         default:
+        //             return;
         //     }
-        // }
+        // });
+
+        const serviceMap = params.cachedDocument.yamlDocument.getIn(['services']);
+        if (isMap(serviceMap)) {
+            for (const service of serviceMap.items) {
+                if (isMap(service.value)) {
+                    const image = service.value.getIn(['image'], true);
+                    const hasBuild = service.value.has('build');
+                    if (!hasBuild && isScalar(image) && typeof image.value === 'string') {
+                        const link = ImageLinkProvider.getLinkForImage(image.value);
+
+                        if (link && image.range) {
+                            results.push(DocumentLink.create(yamlRangeToLspRange(params.cachedDocument.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
+                        }
+                    }
+                }
+            }
+        }
 
         return results;
     }
@@ -38,6 +76,7 @@ export class ImageLinkProvider {
         let match: RegExpExecArray | null;
         let namespace: string | undefined;
         let imageName: string | undefined;
+
         if ((match = dockerHubImageRegex.exec(image)) &&
             (imageName = match.groups?.['imageName'])) {
             return {
