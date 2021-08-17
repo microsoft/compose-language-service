@@ -2,7 +2,6 @@
     "name": "@microsoft/compose-language-service",
     "author": "Microsoft Corporation",
     "version": "0.0.1-alpha",
-    "preview": true,
     "publisher": "ms-azuretools",
     "description": "Language service for Docker Compose documents",
     "license": "See LICENSE in the project root for license information.",
