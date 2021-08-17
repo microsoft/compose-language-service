@@ -16,42 +16,6 @@ export class ImageLinkProvider {
     public static async onDocumentLinks(params: DocumentLinkParams & { cachedDocument: CachedDocument }, token: CancellationToken): Promise<DocumentLink[] | undefined> {
         const results: DocumentLink[] = [];
 
-        // CST.visit(params.cachedDocument.cst, (item, path) => {
-        //     switch (path.length) {
-        //         case 0:
-        //             // At the root of the document, just keep going
-        //             return;
-        //         case 1:
-        //             // We only care about image links under `services`. If the path length is 1 and the key is anything other than `services`, skip
-        //             if (CST.isScalar(item.key) && item.key.source !== 'services') {
-        //                 return CST.visit.SKIP;
-        //             }
-        //             // Otherwise, keep going
-        //             return;
-        //         case 2:
-        //             return;
-        //         case 3:
-        //             if (CST.isScalar(item.key) && item.key.source === 'image' && CST.isScalar(item.value)) {
-        //                 // We're at an image node
-        //                 const imageName = item.value.source;
-        //                 const link = ImageLinkProvider.getLinkForImage(imageName, item.value.offset);
-
-        //                 if (link) {
-        //                     results.push(
-        //                         DocumentLink.create(
-        //                             yamlRangeToLspRange(params.cachedDocument.textDocument, [link.start, link.end]),
-        //                             link.uri
-        //                         )
-        //                     );
-        //                 }
-        //             }
-        //             // Keep going
-        //             return;
-        //         default:
-        //             return;
-        //     }
-        // });
-
         const serviceMap = params.cachedDocument.yamlDocument.getIn(['services']);
         if (isMap(serviceMap)) {
             for (const service of serviceMap.items) {
