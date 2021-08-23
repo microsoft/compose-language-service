@@ -10,10 +10,10 @@ import { CST } from 'yaml';
 type ItemType = 'start' | 'key' | 'sep' | 'value';
 
 export class ExtendedPosition {
-    private readonly item: CST.CollectionItem;
     private readonly path: CST.VisitPath;
     private readonly offset: number;
 
+    public readonly item: CST.CollectionItem;
     public readonly type: ItemType;
     public readonly logicalPath: string;
 

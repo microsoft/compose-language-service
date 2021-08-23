@@ -35,8 +35,9 @@ import {
 import { Composer, isDocument, Parser } from 'yaml';
 import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 import { debounce } from './utils/debounce';
-import { ImageLinkProvider } from './ImageLinkProvider';
+import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { CachedDocument } from './CachedDocument';
+import { KeyHoverProvider } from './providers/KeyHoverProvider';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -50,7 +51,7 @@ export class ComposeLanguageService implements Disposable {
 
         // Hook up all the LSP listeners, which do not create Disposables
         // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
-        // this.createLspHandler(this.connection.onHover, this.onHover);
+        this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
         // this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
         // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
@@ -72,7 +73,7 @@ export class ComposeLanguageService implements Disposable {
             //     triggerCharacters: ['-', ':'],
             //     resolveProvider: false,
             // },
-            // hoverProvider: true,
+            hoverProvider: true,
             // signatureHelpProvider: {
             //     triggerCharacters: ['-', ':'],
             // },
