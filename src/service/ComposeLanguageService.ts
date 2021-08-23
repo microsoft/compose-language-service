@@ -32,7 +32,6 @@ import {
     TextDocumentSyncKind
 }
     from 'vscode-languageserver';
-import { Composer, isDocument, Parser } from 'yaml';
 import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 import { debounce } from './utils/debounce';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
@@ -100,25 +99,7 @@ export class ComposeLanguageService implements Disposable {
     }
 
     public async onDidChangeContent(changed: TextDocumentChangeEvent<TextDocument>): Promise<void> {
-        const tokens = new Parser().parse(changed.document.getText());
-        const [cstDocument] = tokens;
-        const composedTokens = new Composer().compose([cstDocument]);
-        const [parsedDocument] = composedTokens;
-
-        if (cstDocument.type !== 'document') {
-            throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
-        }
-
-        if (!isDocument(parsedDocument)) {
-            throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
-        }
-
-        this.documentCache[changed.document.uri] = {
-            textDocument: changed.document,
-            cst: cstDocument,
-            yamlDocument: parsedDocument,
-        };
-
+        this.documentCache[changed.document.uri] = CachedDocument.create(changed.document);
         this.sendDiagnostics(this.documentCache[changed.document.uri]);
     }
 
