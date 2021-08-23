@@ -20,7 +20,7 @@ import {
     from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
 import { ExtendedParams } from './ExtendedParams';
-import { CompletionProvider } from './providers/CompletionProvider';
+import { AggregateCompletionProvider } from './providers/completion/AggregateCompletionProvider';
 import { DiagnosticProvider } from './providers/DiagnosticProvider';
 import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
@@ -39,7 +39,7 @@ export class ComposeLanguageService implements Disposable {
 
         // Hook up all the LSP listeners, which do not create Disposables
         // These all await a request from the client so we don't need to check for client capabilities
-        this.createLspHandler(this.connection.onCompletion, CompletionProvider.onCompletion);
+        this.createLspHandler(this.connection.onCompletion, AggregateCompletionProvider.onCompletion);
         this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
         this.createLspHandler(this.connection.onSignatureHelp, SignatureHelpProvider.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
@@ -65,14 +65,14 @@ export class ComposeLanguageService implements Disposable {
                 willSaveWaitUntil: false,
                 save: false,
             },
-            // completionProvider: {
-            //     triggerCharacters: ['-', ':'],
-            //     resolveProvider: false,
-            // },
+            completionProvider: {
+                triggerCharacters: ['-', ':'],
+                resolveProvider: false,
+            },
             hoverProvider: true,
-            // signatureHelpProvider: {
-            //     triggerCharacters: ['-', ':'],
-            // },
+            signatureHelpProvider: {
+                triggerCharacters: ['-', ':'],
+            },
             documentLinkProvider: {
                 resolveProvider: false,
             },
@@ -104,7 +104,7 @@ export class ComposeLanguageService implements Disposable {
             try {
                 const doc = this.documentManager.get(params.textDocument.uri);
                 if (!doc) {
-                    throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
+                    throw new ResponseError(ErrorCodes.InvalidParams, 'Document not found in cache.');
                 }
 
                 const extendedParams = {

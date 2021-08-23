@@ -3,11 +3,35 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, DocumentFormattingParams, TextEdit } from 'vscode-languageserver';
+import { CancellationToken, DocumentFormattingParams, Range, TextEdit } from 'vscode-languageserver';
+import { ToStringOptions } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
 
 export class DocumentFormattingProvider {
     public static async onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): Promise<TextEdit[] | undefined> {
-        return undefined;
+        if (params.document.yamlDocument.errors.length) {
+            // Won't return formatting info unless the document is syntactically correct
+            return undefined;
+        }
+
+        const options: ToStringOptions = {
+            indent: params.options.tabSize,
+            indentSeq: true,
+            simpleKeys: true, // todo?
+        };
+
+        const range = Range.create(
+            params.document.textDocument.positionAt(0),
+            params.document.textDocument.positionAt(params.document.textDocument.getText().length - 1)
+        );
+
+        const formatted = params.document.yamlDocument.toString(options);
+
+        // It's heavy-handed but the replacement is for the entire document
+        // TODO is this terrible?
+        return [TextEdit.replace(
+            range,
+            formatted
+        )];
     }
 }
