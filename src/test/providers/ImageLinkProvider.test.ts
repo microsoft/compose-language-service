@@ -190,6 +190,7 @@ describe('ImageLinkProvider', () => {
             const testObject = {
                 services: {
                     a: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
                         'container_name': 'a'
                     },
                 }
