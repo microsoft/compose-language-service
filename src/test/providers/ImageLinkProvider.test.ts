@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { DocumentLink, DocumentLinkRequest, Position, Range, ResponseError } from 'vscode-languageserver';
-import { TestConnection } from './utils/TestConnection';
+import { TestConnection } from '../utils/TestConnection';
 
 interface ImageLinkTestObject {
     services: {

@@ -5,8 +5,8 @@
 
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
 import { isMap, isScalar } from 'yaml';
-import { CachedDocument } from './CachedDocument';
-import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
+import { CachedDocument } from '../CachedDocument';
+import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
@@ -19,6 +19,11 @@ export class ImageLinkProvider {
         const serviceMap = params.cachedDocument.yamlDocument.getIn(['services']);
         if (isMap(serviceMap)) {
             for (const service of serviceMap.items) {
+                // Within each loop we'll check for cancellation (though this is expected to be very fast)
+                if (token.isCancellationRequested) {
+                    return undefined;
+                }
+
                 if (isMap(service.value)) {
                     const image = service.value.getIn(['image'], true);
                     const hasBuild = service.value.has('build');
