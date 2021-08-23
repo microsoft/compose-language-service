@@ -4,10 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-    // CancellationToken,
     Connection,
-    Diagnostic,
-    DiagnosticSeverity,
     Disposable,
     ErrorCodes,
     Event,
@@ -22,25 +19,28 @@ import {
 }
     from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
+import { DiagnosticProvider } from './providers/DiagnosticProvider';
+import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
-import { debounce } from './utils/debounce';
-import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
 
     public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
-        // Hook up the document listener, which creates a Disposable which will be added to this.subscriptions
-        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
+        // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
+        if (this.clientParams.capabilities.textDocument?.publishDiagnostics) {
+            this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, DiagnosticProvider.onDidChangeContent);
+        }
 
         // Hook up all the LSP listeners, which do not create Disposables
+        // These all await a request from the client so we don't need to check for client capabilities
         // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
         this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
         // this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
-        // this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
+        this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
         // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
 
         // Start the document listener
@@ -73,7 +73,7 @@ export class ComposeLanguageService implements Disposable {
             documentLinkProvider: {
                 resolveProvider: false,
             },
-            // documentFormattingProvider: true,
+            documentFormattingProvider: true,
             // semanticTokensProvider: {
             //     full: {
             //         delta: false,
@@ -91,37 +91,6 @@ export class ComposeLanguageService implements Disposable {
                 },
             },
         };
-    }
-
-    public async onDidChangeContent(changed: TextDocumentChangeEvent<ComposeDocument>): Promise<void> {
-        this.sendDiagnostics(changed.document);
-    }
-
-    public sendDiagnostics(doc: ComposeDocument): void {
-        if (!this.clientParams.capabilities.textDocument?.publishDiagnostics) {
-            return;
-        }
-
-        // Diagnostics will be sent half a second after the changes stop
-        debounce(500, { uri: doc.textDocument.uri, callId: 'diagnostics' }, async () => {
-            const diagnostics: Diagnostic[] = [];
-
-            for (const error of [...doc.yamlDocument.errors, ...doc.yamlDocument.warnings]) {
-                diagnostics.push(
-                    Diagnostic.create(
-                        yamlRangeToLspRange(doc.textDocument, error.pos),
-                        error.message,
-                        error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
-                        error.code
-                    )
-                );
-            }
-
-            this.connection.sendDiagnostics({
-                uri: doc.textDocument.uri,
-                diagnostics: diagnostics,
-            });
-        }, this);
     }
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
@@ -150,11 +119,11 @@ export class ComposeLanguageService implements Disposable {
 
     private createDocumentManagerHandler(
         event: Event<TextDocumentChangeEvent<ComposeDocument>>,
-        handler: (params: TextDocumentChangeEvent<ComposeDocument>) => Promise<void>
+        handler: (params: TextDocumentChangeEvent<ComposeDocument> & { connection: Connection }) => Promise<void>
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
             try {
-                return await handler.call(this, params);
+                return await handler.call(this, { ...params, connection: this.connection });
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
