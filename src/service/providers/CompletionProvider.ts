@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, DocumentFormattingParams, TextEdit } from 'vscode-languageserver';
+import { CancellationToken, CompletionList, CompletionParams } from 'vscode-languageserver';
 import { ExtendedParams } from '../ExtendedParams';
 
-export class DocumentFormattingProvider {
-    public static async onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): Promise<TextEdit[] | undefined> {
+export class CompletionProvider {
+    public static async onCompletion(params: CompletionParams & ExtendedParams, token: CancellationToken): Promise<CompletionList | undefined> {
         return undefined;
     }
 }

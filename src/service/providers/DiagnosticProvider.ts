@@ -5,11 +5,16 @@
 
 import { Connection, Diagnostic, DiagnosticSeverity, TextDocumentChangeEvent } from 'vscode-languageserver';
 import { ComposeDocument } from '../ComposeDocument';
+import { ExtendedParams } from '../ExtendedParams';
 import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 
 export class DiagnosticProvider {
-    public static async onDidChangeContent(params: TextDocumentChangeEvent<ComposeDocument> & { connection: Connection }): Promise<void> {
+    public static async onDidChangeContent(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): Promise<void> {
+        if (!params.clientCapabilities.textDocument?.publishDiagnostics) {
+            return;
+        }
+
         DiagnosticProvider.sendDiagnostics(params.document, params.connection);
     }
 

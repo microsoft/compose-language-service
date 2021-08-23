@@ -19,10 +19,13 @@ import {
 }
     from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
+import { ExtendedParams } from './ExtendedParams';
+import { CompletionProvider } from './providers/CompletionProvider';
 import { DiagnosticProvider } from './providers/DiagnosticProvider';
 import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
+import { SignatureHelpProvider } from './providers/SignatureHelpProvider';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
@@ -36,9 +39,9 @@ export class ComposeLanguageService implements Disposable {
 
         // Hook up all the LSP listeners, which do not create Disposables
         // These all await a request from the client so we don't need to check for client capabilities
-        // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
+        this.createLspHandler(this.connection.onCompletion, CompletionProvider.onCompletion);
         this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
-        // this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
+        this.createLspHandler(this.connection.onSignatureHelp, SignatureHelpProvider.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
         this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
         // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
@@ -95,7 +98,7 @@ export class ComposeLanguageService implements Disposable {
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
         event: (handler: ServerRequestHandler<P, R, PR, E>) => void,
-        handler: ServerRequestHandler<P & { doc: ComposeDocument }, R, PR, E>
+        handler: ServerRequestHandler<P & ExtendedParams, R, PR, E>
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
             try {
@@ -104,7 +107,14 @@ export class ComposeLanguageService implements Disposable {
                     throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
                 }
 
-                return await handler.call(this, { ...params, doc }, token, workDoneProgress, resultProgress);
+                const extendedParams = {
+                    ...params,
+                    document: doc,
+                    clientCapabilities: this.clientParams.capabilities,
+                    connection: this.connection
+                };
+
+                return await handler.call(this, extendedParams, token, workDoneProgress, resultProgress);
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
@@ -119,11 +129,18 @@ export class ComposeLanguageService implements Disposable {
 
     private createDocumentManagerHandler(
         event: Event<TextDocumentChangeEvent<ComposeDocument>>,
-        handler: (params: TextDocumentChangeEvent<ComposeDocument> & { connection: Connection }) => Promise<void>
+        handler: (params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams) => Promise<void>
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
             try {
-                return await handler.call(this, { ...params, connection: this.connection });
+                const extendedParams = {
+                    ...params,
+                    document: params.document,
+                    clientCapabilities: this.clientParams.capabilities,
+                    connection: this.connection,
+                };
+
+                return await handler.call(this, extendedParams);
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;

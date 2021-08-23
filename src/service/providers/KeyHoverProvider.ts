@@ -5,13 +5,13 @@
 
 import { CancellationToken, Hover, HoverParams, MarkupContent } from 'vscode-languageserver';
 import { CST } from 'yaml';
-import { ComposeDocument } from '../ComposeDocument';
+import { ExtendedParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 
 export class KeyHoverProvider {
-    public static async onHover(params: HoverParams & { doc: ComposeDocument }, token: CancellationToken): Promise<Hover | undefined> {
-        const extendedPosition = ExtendedPosition.build(params.doc, params.position);
+    public static async onHover(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
+        const extendedPosition = ExtendedPosition.build(params.document, params.position);
 
         if (extendedPosition.itemType === 'key' && CST.isScalar(extendedPosition.item.key)) {
             const keyInfo = ComposeKeyInfo.find((k) => k.pathRegex.test(extendedPosition.logicalPath));
@@ -19,7 +19,7 @@ export class KeyHoverProvider {
             if (keyInfo) {
                 return {
                     contents: keyInfo.contents,
-                    range: yamlRangeToLspRange(params.doc.textDocument, [extendedPosition.item.key.offset, extendedPosition.item.key.offset + extendedPosition.item.key.source.length]),
+                    range: yamlRangeToLspRange(params.document.textDocument, [extendedPosition.item.key.offset, extendedPosition.item.key.offset + extendedPosition.item.key.source.length]),
                 };
             }
         }
