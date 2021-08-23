@@ -5,7 +5,7 @@
 
 import { Position } from 'vscode-languageserver-textdocument';
 import { CST } from 'yaml';
-import { CachedDocument } from './CachedDocument';
+import { ComposeDocument } from './ComposeDocument';
 
 type ItemType = 'start' | 'key' | 'sep' | 'value';
 
@@ -16,16 +16,16 @@ export class ExtendedPosition {
         public readonly logicalPath: string,
     ) { }
 
-    public static build(cachedDocument: CachedDocument, position: Position): ExtendedPosition {
-        const offset = cachedDocument.textDocument.offsetAt(position);
+    public static build(doc: ComposeDocument, position: Position): ExtendedPosition {
+        const offset = doc.textDocument.offsetAt(position);
 
-        const { item, path } = ExtendedPosition.loadItemAndPath(cachedDocument.cst, offset);
+        const { item, path } = ExtendedPosition.loadItemAndPath(doc.cst, offset);
         if (!item || !path) {
             throw new Error(`Failed to load item at position (${position.line}, ${position.character}).`);
         }
 
         const itemType = ExtendedPosition.loadType(item, offset);
-        const logicalPath = ExtendedPosition.loadLogicalPath(cachedDocument.cst, item, path, itemType);
+        const logicalPath = ExtendedPosition.loadLogicalPath(doc.cst, item, path, itemType);
 
         return new ExtendedPosition(item, itemType, logicalPath);
     }

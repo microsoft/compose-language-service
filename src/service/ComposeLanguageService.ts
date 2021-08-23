@@ -3,11 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
     // CancellationToken,
-    // CompletionItem,
-    // CompletionParams,
     Connection,
     Diagnostic,
     DiagnosticSeverity,
@@ -16,29 +13,22 @@ import {
     Event,
     InitializeParams,
     ResponseError,
-    // SemanticTokens,
-    // SemanticTokensBuilder,
-    // SemanticTokensParams,
-    // SemanticTokenTypes,
     ServerCapabilities,
     ServerRequestHandler,
-    // SignatureHelp,
-    // SignatureHelpParams,
     TextDocumentChangeEvent,
     TextDocumentIdentifier,
     TextDocuments,
     TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
-import { CachedDocument } from './CachedDocument';
+import { ComposeDocument } from './ComposeDocument';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
 import { debounce } from './utils/debounce';
 import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 export class ComposeLanguageService implements Disposable {
-    private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-    private readonly documentCache: { [uri: string]: CachedDocument } = {};
+    private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
 
     public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
@@ -103,39 +93,23 @@ export class ComposeLanguageService implements Disposable {
         };
     }
 
-    public async onDidChangeContent(changed: TextDocumentChangeEvent<TextDocument>): Promise<void> {
-        this.documentCache[changed.document.uri] = CachedDocument.create(changed.document);
-        this.sendDiagnostics(this.documentCache[changed.document.uri]);
+    public async onDidChangeContent(changed: TextDocumentChangeEvent<ComposeDocument>): Promise<void> {
+        this.sendDiagnostics(changed.document);
     }
 
-    /*
-    public async onCompletion(params: CompletionParams, token: CancellationToken): Promise<CompletionItem[] | undefined> {
-        return undefined;
-    }
-
-    public async onSignatureHelp(params: SignatureHelpParams, token: CancellationToken): Promise<SignatureHelp | undefined> {
-        return undefined;
-    }
-
-    public async onSemanticTokens(params: SemanticTokensParams, token: CancellationToken): Promise<SemanticTokens> {
-        const builder = new SemanticTokensBuilder();
-        return builder.build();
-    }
-    */
-
-    public sendDiagnostics(cachedDocument: CachedDocument): void {
+    public sendDiagnostics(doc: ComposeDocument): void {
         if (!this.clientParams.capabilities.textDocument?.publishDiagnostics) {
             return;
         }
 
         // Diagnostics will be sent half a second after the changes stop
-        debounce(500, { uri: cachedDocument.textDocument.uri, callId: 'diagnostics' }, async () => {
+        debounce(500, { uri: doc.textDocument.uri, callId: 'diagnostics' }, async () => {
             const diagnostics: Diagnostic[] = [];
 
-            for (const error of [...cachedDocument.yamlDocument.errors, ...cachedDocument.yamlDocument.warnings]) {
+            for (const error of [...doc.yamlDocument.errors, ...doc.yamlDocument.warnings]) {
                 diagnostics.push(
                     Diagnostic.create(
-                        yamlRangeToLspRange(cachedDocument.textDocument, error.pos),
+                        yamlRangeToLspRange(doc.textDocument, error.pos),
                         error.message,
                         error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
                         error.code
@@ -144,7 +118,7 @@ export class ComposeLanguageService implements Disposable {
             }
 
             this.connection.sendDiagnostics({
-                uri: cachedDocument.textDocument.uri,
+                uri: doc.textDocument.uri,
                 diagnostics: diagnostics,
             });
         }, this);
@@ -152,17 +126,16 @@ export class ComposeLanguageService implements Disposable {
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
         event: (handler: ServerRequestHandler<P, R, PR, E>) => void,
-        handler: ServerRequestHandler<P & { cachedDocument: CachedDocument }, R, PR, E>
+        handler: ServerRequestHandler<P & { doc: ComposeDocument }, R, PR, E>
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
             try {
-                const cachedDocument = this.documentCache[params.textDocument.uri];
-                const textDocument = this.documentManager.get(params.textDocument.uri);
-                if (!cachedDocument || !textDocument) {
+                const doc = this.documentManager.get(params.textDocument.uri);
+                if (!doc) {
                     throw new ResponseError(ErrorCodes.ParseError, 'Document not found in cache.');
                 }
 
-                return await handler.call(this, { ...params, cachedDocument, textDocument }, token, workDoneProgress, resultProgress);
+                return await handler.call(this, { ...params, doc }, token, workDoneProgress, resultProgress);
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
@@ -176,10 +149,10 @@ export class ComposeLanguageService implements Disposable {
     }
 
     private createDocumentManagerHandler(
-        event: Event<TextDocumentChangeEvent<TextDocument>>,
-        handler: (params: TextDocumentChangeEvent<TextDocument>) => Promise<void>
+        event: Event<TextDocumentChangeEvent<ComposeDocument>>,
+        handler: (params: TextDocumentChangeEvent<ComposeDocument>) => Promise<void>
     ): void {
-        event(async (params: TextDocumentChangeEvent<TextDocument>) => {
+        event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
             try {
                 return await handler.call(this, params);
             } catch (error) {

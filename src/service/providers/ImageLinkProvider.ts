@@ -5,7 +5,7 @@
 
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
 import { isMap, isScalar } from 'yaml';
-import { CachedDocument } from '../CachedDocument';
+import { ComposeDocument } from '../ComposeDocument';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
@@ -13,10 +13,10 @@ const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\
 const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
 export class ImageLinkProvider {
-    public static async onDocumentLinks(params: DocumentLinkParams & { cachedDocument: CachedDocument }, token: CancellationToken): Promise<DocumentLink[] | undefined> {
+    public static async onDocumentLinks(params: DocumentLinkParams & { doc: ComposeDocument }, token: CancellationToken): Promise<DocumentLink[] | undefined> {
         const results: DocumentLink[] = [];
 
-        const serviceMap = params.cachedDocument.yamlDocument.getIn(['services']);
+        const serviceMap = params.doc.yamlDocument.getIn(['services']);
         if (isMap(serviceMap)) {
             for (const service of serviceMap.items) {
                 // Within each loop we'll check for cancellation (though this is expected to be very fast)
@@ -31,7 +31,7 @@ export class ImageLinkProvider {
                         const link = ImageLinkProvider.getLinkForImage(image.value);
 
                         if (link && image.range) {
-                            results.push(DocumentLink.create(yamlRangeToLspRange(params.cachedDocument.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
+                            results.push(DocumentLink.create(yamlRangeToLspRange(params.doc.textDocument, [image.range[0] + link.start, image.range[0] + link.start + link.length]), link.uri));
                         }
                     }
                 }

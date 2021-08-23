@@ -3,18 +3,18 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ErrorCodes, ResponseError } from 'vscode-languageserver';
+import { ErrorCodes, ResponseError, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 
-export class CachedDocument {
+export class ComposeDocument {
     private constructor(
         public readonly textDocument: TextDocument,
         public readonly cst: CST.Document,
         public readonly yamlDocument: YamlDocument,
     ) { }
 
-    public static create(textDocument: TextDocument): CachedDocument {
+    private static create(textDocument: TextDocument): ComposeDocument {
         const tokens = new Parser().parse(textDocument.getText());
         const [cstDocument] = tokens;
         const composedTokens = new Composer().compose([cstDocument]);
@@ -28,6 +28,11 @@ export class CachedDocument {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
 
-        return new CachedDocument(textDocument, cstDocument, parsedDocument);
+        return new ComposeDocument(textDocument, cstDocument, parsedDocument);
     }
+
+    public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
+        create: (uri, languageId, version, content) => ComposeDocument.create(TextDocument.create(uri, languageId, version, content)),
+        update: (document, changes, version) => ComposeDocument.create(TextDocument.update(document.textDocument, changes, version)),
+    };
 }
