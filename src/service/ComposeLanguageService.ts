@@ -14,8 +14,6 @@ import {
     Disposable,
     ErrorCodes,
     Event,
-    // Hover,
-    // HoverParams,
     InitializeParams,
     ResponseError,
     // SemanticTokens,
@@ -29,14 +27,14 @@ import {
     TextDocumentChangeEvent,
     TextDocumentIdentifier,
     TextDocuments,
-    TextDocumentSyncKind
+    TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
-import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
-import { debounce } from './utils/debounce';
-import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { CachedDocument } from './CachedDocument';
+import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
+import { debounce } from './utils/debounce';
+import { yamlRangeToLspRange } from './utils/yamlRangeToLspRange';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -47,12 +45,12 @@ export class ComposeLanguageService implements Disposable {
         // Hook up the document listener, which creates a Disposable which will be added to this.subscriptions
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, this.onDidChangeContent);
 
-
         // Hook up all the LSP listeners, which do not create Disposables
         // this.createLspHandler(this.connection.onCompletion, this.onCompletion);
         this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
         // this.createLspHandler(this.connection.onSignatureHelp, this.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
+        // this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
         // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
 
         // Start the document listener
@@ -67,7 +65,13 @@ export class ComposeLanguageService implements Disposable {
 
     public get capabilities(): ServerCapabilities {
         return {
-            textDocumentSync: TextDocumentSyncKind.Incremental,
+            textDocumentSync: {
+                openClose: false,
+                change: TextDocumentSyncKind.Incremental,
+                willSave: false,
+                willSaveWaitUntil: false,
+                save: false,
+            },
             // completionProvider: {
             //     triggerCharacters: ['-', ':'],
             //     resolveProvider: false,
@@ -79,6 +83,7 @@ export class ComposeLanguageService implements Disposable {
             documentLinkProvider: {
                 resolveProvider: false,
             },
+            // documentFormattingProvider: true,
             // semanticTokensProvider: {
             //     full: {
             //         delta: false,
@@ -105,10 +110,6 @@ export class ComposeLanguageService implements Disposable {
 
     /*
     public async onCompletion(params: CompletionParams, token: CancellationToken): Promise<CompletionItem[] | undefined> {
-        return undefined;
-    }
-
-    public async onHover(params: HoverParams, token: CancellationToken): Promise<Hover | undefined> {
         return undefined;
     }
 
