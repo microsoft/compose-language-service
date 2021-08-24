@@ -6,9 +6,14 @@
 import { CancellationToken, DocumentFormattingParams, Range, TextEdit } from 'vscode-languageserver';
 import { ToStringOptions } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
+import { ProviderBase } from './ProviderBase';
 
-export class DocumentFormattingProvider {
-    public static async onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): Promise<TextEdit[] | undefined> {
+export class DocumentFormattingProvider extends ProviderBase {
+    public async onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): Promise<TextEdit[] | undefined> {
+        if (!this.clientCapabilities.textDocument?.formatting) {
+            return undefined;
+        }
+
         if (params.document.yamlDocument.errors.length) {
             // Won't return formatting info unless the document is syntactically correct
             return undefined;

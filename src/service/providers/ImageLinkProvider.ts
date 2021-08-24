@@ -7,13 +7,18 @@ import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-lang
 import { isMap, isScalar } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
+import { ProviderBase } from './ProviderBase';
 
 const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
-export class ImageLinkProvider {
-    public static async onDocumentLinks(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
+export class ImageLinkProvider extends ProviderBase {
+    public async onDocumentLinks(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
+        if (!this.clientCapabilities.textDocument?.documentLink) {
+            return undefined;
+        }
+
         const results: DocumentLink[] = [];
 
         const serviceMap = params.document.yamlDocument.getIn(['services']);

@@ -3,11 +3,15 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ClientCapabilities, Connection } from 'vscode-languageserver';
+import { Position } from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
+import { ExtendedPosition } from './ExtendedPosition';
 
 export interface ExtendedParams {
-    document: ComposeDocument,
-    clientCapabilities: ClientCapabilities,
-    connection: Connection,
+    document: ComposeDocument;
+}
+
+export interface ExtendedPositionParams extends ExtendedParams {
+    position: Position;
+    extendedPosition?: ExtendedPosition;
 }

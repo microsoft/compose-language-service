@@ -3,14 +3,30 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, Hover, HoverParams, MarkupContent } from 'vscode-languageserver';
+import { CancellationToken, Hover, HoverParams, MarkupContent, MarkupKind } from 'vscode-languageserver';
 import { CST } from 'yaml';
+import { ComposeLanguageService } from '../ComposeLanguageService';
 import { ExtendedParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
+import { ProviderBase } from './ProviderBase';
 
-export class KeyHoverProvider {
-    public static async onHover(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
+export class KeyHoverProvider extends ProviderBase {
+    private readonly preferMarkdown: boolean;
+
+    public constructor(languageService: ComposeLanguageService) {
+        super(languageService);
+
+        // Determine client's preferred content format. If `contentFormat` is undefined or empty, we assume plaintext.
+        const contentFormat = this.clientCapabilities.textDocument?.hover?.contentFormat;
+        this.preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
+    }
+
+    public async onHover(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
+        if (!this.clientCapabilities.textDocument?.hover) {
+            return undefined;
+        }
+
         const extendedPosition = ExtendedPosition.build(params.document, params.position);
 
         if (extendedPosition.itemType === 'key' && CST.isScalar(extendedPosition.item.key)) {
@@ -18,7 +34,7 @@ export class KeyHoverProvider {
 
             if (keyInfo) {
                 return {
-                    contents: keyInfo.contents,
+                    contents: this.preferMarkdown ? keyInfo.markdownContents : keyInfo.plaintextContents,
                     range: yamlRangeToLspRange(params.document.textDocument, [extendedPosition.item.key.offset, extendedPosition.item.key.offset + extendedPosition.item.key.source.length]),
                 };
             }
@@ -30,14 +46,19 @@ export class KeyHoverProvider {
 
 interface ComposeKeyInformation {
     pathRegex: RegExp,
-    contents: MarkupContent,
+    markdownContents: MarkupContent,
+    plaintextContents: MarkupContent,
 }
 
 const ComposeKeyInfo: ComposeKeyInformation[] = [
     {
         pathRegex: /^\/services$/i,
-        contents: {
+        markdownContents: {
             kind: 'markdown',
+            value: 'The services in your compose project',
+        },
+        plaintextContents: {
+            kind: 'plaintext',
             value: 'The services in your compose project',
         },
     },

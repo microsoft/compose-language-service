@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
+    ClientCapabilities,
     Connection,
     Disposable,
     ErrorCodes,
@@ -31,20 +32,16 @@ export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
 
-    public constructor(private readonly connection: Connection, private readonly clientParams: InitializeParams) {
+    public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
-        if (this.clientParams.capabilities.textDocument?.publishDiagnostics) {
-            this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, DiagnosticProvider.onDidChangeContent);
-        }
+        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(this).onDidChangeContent);
 
-        // Hook up all the LSP listeners, which do not create Disposables
-        // These all await a request from the client so we don't need to check for client capabilities
-        this.createLspHandler(this.connection.onCompletion, MultiCompletionProvider.onCompletion);
-        this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
-        this.createLspHandler(this.connection.onSignatureHelp, MultiSignatureHelpProvider.onSignatureHelp);
-        this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
-        this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
-        // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
+        // Hook up all the LSP listeners, which do not create Disposables for some reason
+        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(this).on);
+        this.createLspHandler(this.connection.onHover, new KeyHoverProvider(this).onHover);
+        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider(this).on);
+        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider(this).onDocumentLinks);
+        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider(this).onDocumentFormatting);
 
         // Start the document listener
         this.documentManager.listen(this.connection);
@@ -94,6 +91,10 @@ export class ComposeLanguageService implements Disposable {
                 },
             },
         };
+    }
+
+    public get clientCapabilities(): ClientCapabilities {
+        return this.clientParams.capabilities;
     }
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
