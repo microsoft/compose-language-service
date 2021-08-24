@@ -3,10 +3,6 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-describe('(Unit) debounce', () => {
-    xit('Should filter multiple calls into one');
-
-    xit('Should call the callback after the debounce delay');
-
-    xit('Should debounce separate call IDs separately');
+describe('(Unit) ExtendedPosition', () => {
+    xit('Should have tests');
 });

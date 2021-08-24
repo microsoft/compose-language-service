@@ -7,10 +7,11 @@ import { CancellationToken, CompletionList, CompletionParams } from 'vscode-lang
 import { ExtendedParams } from '../../ExtendedParams';
 
 /**
- * Completions are by far the most involved thing so we split into many providers for code cleanliness' sake, and aggregate their individual results
+ * Completions are one of the more involved features so we will split up the code, with this multi-provider calling each of them
+ * Most will no-op but the results will all be aggregated upon return
  * Importantly, if any fail, we will throw an error--all other results will be ignored
  */
-export class AggregateCompletionProvider {
+export class MultiCompletionProvider {
     public static async onCompletion(params: CompletionParams & ExtendedParams, token: CancellationToken): Promise<CompletionList | undefined> {
         // const extendedPosition = ExtendedPosition.build(params.document, params.position);
         return undefined;

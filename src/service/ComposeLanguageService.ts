@@ -20,12 +20,12 @@ import {
     from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
 import { ExtendedParams } from './ExtendedParams';
-import { AggregateCompletionProvider } from './providers/completion/AggregateCompletionProvider';
+import { MultiCompletionProvider } from './providers/completion/MultiCompletionProvider';
 import { DiagnosticProvider } from './providers/DiagnosticProvider';
 import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
-import { SignatureHelpProvider } from './providers/SignatureHelpProvider';
+import { MultiSignatureHelpProvider } from './providers/signatureHelp/MultiSignatureHelpProvider';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
@@ -39,9 +39,9 @@ export class ComposeLanguageService implements Disposable {
 
         // Hook up all the LSP listeners, which do not create Disposables
         // These all await a request from the client so we don't need to check for client capabilities
-        this.createLspHandler(this.connection.onCompletion, AggregateCompletionProvider.onCompletion);
+        this.createLspHandler(this.connection.onCompletion, MultiCompletionProvider.onCompletion);
         this.createLspHandler(this.connection.onHover, KeyHoverProvider.onHover);
-        this.createLspHandler(this.connection.onSignatureHelp, SignatureHelpProvider.onSignatureHelp);
+        this.createLspHandler(this.connection.onSignatureHelp, MultiSignatureHelpProvider.onSignatureHelp);
         this.createLspHandler(this.connection.onDocumentLinks, ImageLinkProvider.onDocumentLinks);
         this.createLspHandler(this.connection.onDocumentFormatting, DocumentFormattingProvider.onDocumentFormatting);
         // this.createLspHandler(this.connection.languages.semanticTokens.on, this.onSemanticTokens);
