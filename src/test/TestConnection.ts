@@ -11,7 +11,12 @@ import { Document } from 'yaml';
 import { ComposeLanguageService } from '../service/ComposeLanguageService';
 
 export const DefaultInitializeParams: InitializeParams = {
-    capabilities: {},
+    capabilities: {
+        textDocument: {
+            documentLink: {},
+            moniker: {},
+        },
+    },
     processId: 1,
     rootUri: null,
     workspaceFolders: null
