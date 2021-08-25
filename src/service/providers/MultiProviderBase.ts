@@ -16,6 +16,8 @@ export abstract class MultiProviderBase<P extends ExtendedParams & { position: P
     }
 
     public on(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): R | undefined {
+        // TODO: when working through a signature the client makes many requests; is it wasteful to recompute the position like this every time?
+        // Does that apply only to signatures or to completions too?
         const extendedParams: P & ExtendedPositionParams = {
             ...params,
             extendedPosition: ExtendedPosition.build(params.document, params.position),

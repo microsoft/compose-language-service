@@ -9,7 +9,7 @@ import { SubproviderBase } from '../MultiProviderBase';
 
 export class PortsSignatureHelpProvider implements SubproviderBase<SignatureHelpParams & ExtendedPositionParams, SignatureHelp, never> {
     public on(params: SignatureHelpParams & ExtendedPositionParams, token: CancellationToken): SignatureHelp | undefined {
-        if (!/\/services\/\w+\/ports\/<value>/i.test(params.extendedPosition.logicalPath)) {
+        if (!/^\/services\/\w+\/ports\/.+$/i.test(params.extendedPosition.logicalPath)) {
             return undefined;
         }
 
@@ -20,11 +20,18 @@ export class PortsSignatureHelpProvider implements SubproviderBase<SignatureHelp
         };
 
         result.signatures.push(
-            SignatureInformation.create('Short syntax', undefined,
-                ParameterInformation.create('- 5000:5000'),
-                ParameterInformation.create('- 5000/tcp:5000/tcp')
-            )
+            SignatureInformation.create('- 5000:5001', undefined,
+                ParameterInformation.create('5000'),
+                ParameterInformation.create('5001'),
+            ),
+            SignatureInformation.create('- 5000/tcp:5001/tcp', undefined,
+                ParameterInformation.create('5000/tcp'),
+                ParameterInformation.create('5001/tcp'),
+            ),
         );
+
+        result.activeSignature = 0;
+        //result.activeParameter = CST.isScalar(params.extendedPosition.item.value)
 
         return result;
     }
