@@ -1,5 +1,9 @@
 # Docker Compose Language Service (Preview)
 
+[![Node CI Build and Test](https://github.com/microsoft/compose-language-service/actions/workflows/node.js.yml/badge.svg)](https://github.com/microsoft/compose-language-service/actions/workflows/node.js.yml)
+
+## Overview
+
 This project contains a language service for Docker Compose, implementing the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/). It is shipped in the [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) extension for Visual Studio Code.
 
 ## Contributing
