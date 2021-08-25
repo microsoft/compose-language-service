@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressReporter } from 'vscode-languageserver';
-import { ExtendedPositionParams } from '../../ExtendedParams';
+import { ExtendedParams } from '../../ExtendedParams';
 import { MultiProviderBase } from '../MultiProviderBase';
 
 /**
@@ -12,8 +12,8 @@ import { MultiProviderBase } from '../MultiProviderBase';
  * Most will no-op but the results will all be aggregated upon return
  * Importantly, if any fail, we will throw an error--all other results will be ignored
  */
-export class MultiCompletionProvider extends MultiProviderBase<CompletionParams & ExtendedPositionParams, CompletionItem[], never> {
-    public override async on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
+export class MultiCompletionProvider extends MultiProviderBase<CompletionParams & ExtendedParams, CompletionItem[], never> {
+    public override on(params: CompletionParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): CompletionItem[] | undefined {
         if (!this.clientCapabilities.textDocument?.completion) {
             return undefined;
         }

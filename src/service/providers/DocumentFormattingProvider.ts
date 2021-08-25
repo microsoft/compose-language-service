@@ -9,7 +9,7 @@ import { ExtendedParams } from '../ExtendedParams';
 import { ProviderBase } from './ProviderBase';
 
 export class DocumentFormattingProvider extends ProviderBase {
-    public async onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): Promise<TextEdit[] | undefined> {
+    public onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): TextEdit[] | undefined {
         if (!this.clientCapabilities.textDocument?.formatting) {
             return undefined;
         }

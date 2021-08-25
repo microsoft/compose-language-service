@@ -4,16 +4,24 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, SignatureHelp, SignatureHelpParams, WorkDoneProgressReporter } from 'vscode-languageserver';
-import { ExtendedPositionParams } from '../../ExtendedParams';
+import { ComposeLanguageService } from '../../ComposeLanguageService';
+import { ExtendedParams } from '../../ExtendedParams';
 import { MultiProviderBase } from '../MultiProviderBase';
+import { PortsSignatureHelpProvider } from './PortsSignatureHelpProvider';
 
 /**
  * Signatures are one of the more involved features so we will split up the code, with this multi-provider calling each of them
  * Most will no-op but the first to return a result will "win"
  * Importantly, if any fail before a result is found, we will throw an error--all other providers will be ignored
  */
-export class MultiSignatureHelpProvider extends MultiProviderBase<SignatureHelpParams & ExtendedPositionParams, SignatureHelp, never> {
-    public override async on(params: SignatureHelpParams & ExtendedPositionParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<SignatureHelp | undefined> {
+export class MultiSignatureHelpProvider extends MultiProviderBase<SignatureHelpParams & ExtendedParams, SignatureHelp, never> {
+    public constructor(languageService: ComposeLanguageService) {
+        super(languageService);
+
+        this.register(new PortsSignatureHelpProvider());
+    }
+
+    public override on(params: SignatureHelpParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): SignatureHelp | undefined {
         if (!this.clientCapabilities.textDocument?.signatureHelp) {
             return undefined;
         }

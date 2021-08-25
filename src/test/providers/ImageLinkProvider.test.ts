@@ -278,6 +278,8 @@ describe('ImageLinkProvider', () => {
 
             await requestAndCompare(testConnection, testObject, []);
         });
+
+        xit('Should NOT provide links if the client does not support it');
     });
 
     after('Cleanup', () => {

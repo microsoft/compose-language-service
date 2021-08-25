@@ -15,5 +15,5 @@ describe('KeyHoverProvider', () => {
 
     xit('Should not provide hovers for separators');
 
-    xit('Shoudl not provide hovers for comments');
+    xit('Should not provide hovers for comments');
 });

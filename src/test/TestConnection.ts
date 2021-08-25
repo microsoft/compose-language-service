@@ -19,7 +19,7 @@ export const DefaultInitializeParams: InitializeParams = {
     },
     processId: 1,
     rootUri: null,
-    workspaceFolders: null
+    workspaceFolders: null,
 };
 
 export class TestConnection implements Disposable {

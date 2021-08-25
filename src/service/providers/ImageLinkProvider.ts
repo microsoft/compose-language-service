@@ -14,7 +14,7 @@ const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\
 const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
 export class ImageLinkProvider extends ProviderBase {
-    public async onDocumentLinks(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): Promise<DocumentLink[] | undefined> {
+    public onDocumentLinks(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): DocumentLink[] | undefined {
         if (!this.clientCapabilities.textDocument?.documentLink) {
             return undefined;
         }

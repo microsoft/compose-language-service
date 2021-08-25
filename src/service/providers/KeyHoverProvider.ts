@@ -22,7 +22,7 @@ export class KeyHoverProvider extends ProviderBase {
         this.preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
     }
 
-    public async onHover(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
+    public onHover(params: HoverParams & ExtendedParams, token: CancellationToken): Hover | undefined {
         if (!this.clientCapabilities.textDocument?.hover) {
             return undefined;
         }

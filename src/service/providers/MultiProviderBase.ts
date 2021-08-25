@@ -3,23 +3,29 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, ResultProgressReporter, WorkDoneProgressReporter } from 'vscode-languageserver';
-import { ExtendedPositionParams } from '../ExtendedParams';
+import { CancellationToken, Position, ResultProgressReporter, WorkDoneProgressReporter } from 'vscode-languageserver';
+import { ExtendedParams, ExtendedPositionParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
 import { ProviderBase } from './ProviderBase';
 
-export abstract class MultiProviderBase<P extends ExtendedPositionParams, R, PR> extends ProviderBase {
-    protected readonly subproviders: SubproviderBase<P, R, PR>[] = [];
+export abstract class MultiProviderBase<P extends ExtendedParams & { position: Position }, R, PR> extends ProviderBase {
+    protected readonly subproviders: SubproviderBase<P & ExtendedPositionParams, R, PR>[] = [];
 
-    public register(subprovider: SubproviderBase<P, R, PR>): void {
+    public register(subprovider: SubproviderBase<P & ExtendedPositionParams, R, PR>): void {
         this.subproviders.push(subprovider);
     }
 
-    public async on(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): Promise<R | undefined> {
-        params.extendedPosition = ExtendedPosition.build(params.document, params.position);
-        const subpromises = this.subproviders.map(s => s.on(params, token, workDoneProgress, resultProgress));
+    public on(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): R | undefined {
+        const extendedParams: P & ExtendedPositionParams = {
+            ...params,
+            extendedPosition: ExtendedPosition.build(params.document, params.position),
+        };
 
-        const subresults = await Promise.all(subpromises);
+        const subresults: (R | undefined)[] = [];
+
+        for (const subprovider of this.subproviders) {
+            subresults.push(subprovider.on(extendedParams, token, workDoneProgress, resultProgress));
+        }
 
         return this.reduce(subresults);
     }
@@ -27,6 +33,6 @@ export abstract class MultiProviderBase<P extends ExtendedPositionParams, R, PR>
     protected abstract reduce(subresults: (R | undefined)[]): R | undefined;
 }
 
-export interface SubproviderBase<P, R, PR> {
-    on: (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>) => Promise<R>;
+export interface SubproviderBase<P extends ExtendedPositionParams, R, PR> {
+    on: (params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>) => R | undefined;
 }

@@ -112,10 +112,10 @@ export class ComposeLanguageService implements Disposable {
                     ...params,
                     document: doc,
                     clientCapabilities: this.clientParams.capabilities,
-                    connection: this.connection
+                    connection: this.connection,
                 };
 
-                return await handler.call(this, extendedParams, token, workDoneProgress, resultProgress);
+                return await Promise.resolve(handler.call(this, extendedParams, token, workDoneProgress, resultProgress));
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
@@ -130,7 +130,7 @@ export class ComposeLanguageService implements Disposable {
 
     private createDocumentManagerHandler(
         event: Event<TextDocumentChangeEvent<ComposeDocument>>,
-        handler: (params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams) => Promise<void>
+        handler: (params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams) => Promise<void> | void
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
             try {
@@ -141,7 +141,7 @@ export class ComposeLanguageService implements Disposable {
                     connection: this.connection,
                 };
 
-                return await handler.call(this, extendedParams);
+                return await Promise.resolve(handler.call(this, extendedParams));
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;

@@ -13,5 +13,5 @@ export interface ExtendedParams {
 
 export interface ExtendedPositionParams extends ExtendedParams {
     position: Position;
-    extendedPosition?: ExtendedPosition;
+    extendedPosition: ExtendedPosition;
 }

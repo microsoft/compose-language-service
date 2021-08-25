@@ -11,7 +11,7 @@ import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
 export class DiagnosticProvider extends ProviderBase {
-    public async onDidChangeContent(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): Promise<void> {
+    public onDidChangeContent(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
         if (!this.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
