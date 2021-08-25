@@ -56,7 +56,7 @@ export class ComposeLanguageService implements Disposable {
     public get capabilities(): ServerCapabilities {
         return {
             textDocumentSync: {
-                openClose: false,
+                openClose: true,
                 change: TextDocumentSyncKind.Incremental,
                 willSave: false,
                 willSaveWaitUntil: false,
@@ -115,7 +115,7 @@ export class ComposeLanguageService implements Disposable {
                     connection: this.connection,
                 };
 
-                return await Promise.resolve(handler.call(this, extendedParams, token, workDoneProgress, resultProgress));
+                return await Promise.resolve(handler(extendedParams, token, workDoneProgress, resultProgress));
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;
@@ -141,7 +141,7 @@ export class ComposeLanguageService implements Disposable {
                     connection: this.connection,
                 };
 
-                return await Promise.resolve(handler.call(this, extendedParams));
+                return await Promise.resolve(handler(extendedParams));
             } catch (error) {
                 if (error instanceof ResponseError) {
                     return error;

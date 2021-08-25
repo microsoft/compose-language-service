@@ -10,25 +10,27 @@ import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yam
 export class ComposeDocument {
     private constructor(
         public readonly textDocument: TextDocument,
-        public readonly cst: CST.Document,
+        public readonly fullCst: CST.Token[],
+        public readonly documentCst: CST.Document,
         public readonly yamlDocument: YamlDocument,
     ) { }
 
     private static create(textDocument: TextDocument): ComposeDocument {
-        const tokens = new Parser().parse(textDocument.getText());
-        const [cstDocument] = tokens;
-        const composedTokens = new Composer().compose([cstDocument]);
-        const [parsedDocument] = composedTokens;
+        const fullCst = Array.from(new Parser().parse(textDocument.getText()));
 
-        if (cstDocument.type !== 'document') {
+        const documentCst: CST.Document | undefined = fullCst.find(t => t.type === 'document') as CST.Document;
+        if (!documentCst) {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
 
-        if (!isDocument(parsedDocument)) {
+        const composedTokens = new Composer().compose(fullCst, true);
+        const [yamlDocument] = composedTokens;
+
+        if (!isDocument(yamlDocument)) {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
 
-        return new ComposeDocument(textDocument, cstDocument, parsedDocument);
+        return new ComposeDocument(textDocument, fullCst, documentCst, yamlDocument);
     }
 
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
