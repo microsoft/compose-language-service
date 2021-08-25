@@ -8,7 +8,7 @@ import { ExtendedParams, ExtendedPositionParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
 import { ProviderBase } from './ProviderBase';
 
-export abstract class MultiProviderBase<P extends ExtendedParams & { position: Position }, R, PR> extends ProviderBase {
+export abstract class MultiProviderBase<P extends ExtendedParams & { position: Position }, R, PR> extends ProviderBase<P, R | undefined, PR, never> {
     protected readonly subproviders: SubproviderBase<P & ExtendedPositionParams, R, PR>[] = [];
 
     public register(subprovider: SubproviderBase<P & ExtendedPositionParams, R, PR>): void {
