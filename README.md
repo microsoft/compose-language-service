@@ -6,6 +6,10 @@
 
 This project contains a language service for Docker Compose, implementing the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/). It is shipped in the [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) extension for Visual Studio Code.
 
+## Features
+
+(TODO) Add features information and/or images
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
