@@ -18,6 +18,8 @@ export class ComposeDocument {
     private static create(textDocument: TextDocument): ComposeDocument {
         const fullCst = Array.from(new Parser().parse(textDocument.getText()));
 
+        // The CST can consist of more than just the document
+        // Get the first `type === 'document'` item out of the list; this is the actual document
         const documentCst: CST.Document | undefined = fullCst.find(t => t.type === 'document') as CST.Document;
         if (!documentCst) {
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
