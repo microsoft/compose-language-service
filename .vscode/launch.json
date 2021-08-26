@@ -52,6 +52,7 @@
                 "--extensionDevelopmentPath=${workspaceFolder}/src/test/clientExtension",
                 "--disable-extension=ms-azuretools.vscode-docker", // Keep the Docker extension from running so it doesn't interfere with testing
             ],
+            "preLaunchTask": "${defaultBuildTask}",
         },
         {
             "name": "Server Attach",
@@ -60,7 +61,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "type": "pwa-node"
+            "type": "pwa-node",
+            "timeout": 20000
         },
     ],
     "compounds": [
