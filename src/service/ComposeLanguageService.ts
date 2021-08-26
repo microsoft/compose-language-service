@@ -70,6 +70,7 @@ export class ComposeLanguageService implements Disposable {
             hoverProvider: true,
             signatureHelpProvider: {
                 triggerCharacters: ['-', ':'],
+                retriggerCharacters: ['\n'],
             },
             documentLinkProvider: {
                 resolveProvider: false,

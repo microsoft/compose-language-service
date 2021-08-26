@@ -17,27 +17,27 @@ const DefaultPortSignatures: PortSignature[] = [
         info: SignatureInformation.create('- "5000"', undefined,
             ParameterInformation.create('5000'),
         ),
-        match: /^-\s*"?\d*$/i, // Matches by default and any number of digits up to the end of the string
+        match: /^-\s*"?\d*"?$/i, // Matches by default and any number of digits up to the end of the string
     },
     {
         info: SignatureInformation.create('- "5000-5001"', undefined,
             ParameterInformation.create('5000-5001'),
         ),
-        match: /^-\s*"?\d+-\d*$/i, // Matches a number followed by `-` followed by any number of digits up to the end of the string
+        match: /^-\s*"?\d+-\d*"?$/i, // Matches a number followed by `-` followed by any number of digits up to the end of the string
     },
     {
         info: SignatureInformation.create('- "5000:5001"', undefined,
             ParameterInformation.create('5000'),
             ParameterInformation.create('5001'),
         ),
-        match: /^-\s*"?\d+:\d*$/i, // Matches a number followed by `:` followed by any number of digits up to the end of the string
+        match: /^-\s*"?\d+:\d*"?$/i, // Matches a number followed by `:` followed by any number of digits up to the end of the string
     },
     {
-        info: SignatureInformation.create('- "5000/tcp:5001/tcp"', undefined,
-            ParameterInformation.create('5000/tcp'),
+        info: SignatureInformation.create('- "5000:5001/tcp"', undefined,
+            ParameterInformation.create('5000'),
             ParameterInformation.create('5001/tcp'),
         ),
-        match: /^-\s*"?\d+\//i, // Matches a number followed by `/`
+        match: /^-\s*"?\d+:\d+\//i, // Matches a number, then `:`, then a number followed by `/`
     },
     {
         info: SignatureInformation.create('- "5000-5001:5002-5003"', undefined,
@@ -61,7 +61,7 @@ export class PortsSignatureHelpProvider implements SubproviderBase<SignatureHelp
             // The content changed to cause this retrigger. New signatures will not be computed, instead just the `activeSignature` and `activeParameter` will be updated.
             return {
                 signatures: params.context.activeSignatureHelp.signatures,
-                ...this.determineActiveSignatureAndParameter(params, params.context.activeSignatureHelp.activeSignature),
+                ...this.determineActiveSignatureAndParameter(params),
             };
         }
 
@@ -71,20 +71,20 @@ export class PortsSignatureHelpProvider implements SubproviderBase<SignatureHelp
 
         return {
             signatures: DefaultPortSignatures.map(s => s.info),
-            activeSignature: 0,
-            activeParameter: 0,
+            ...this.determineActiveSignatureAndParameter(params),
         };
     }
 
-    private determineActiveSignatureAndParameter(params: SignatureHelpParams & ExtendedPositionParams, activeSignature: number | null): { activeSignature: number | null, activeParameter: number | null } {
+    private determineActiveSignatureAndParameter(params: SignatureHelpParams & ExtendedPositionParams): { activeSignature: number | null, activeParameter: number | null } {
         const lineContent = params.document.lineAt(params.position)?.trim() ?? '';
+        let activeSignature: number | null = null;
         let activeParameter: number | null = null;
 
-        if (activeSignature === null || activeSignature === undefined) {
-            activeSignature = DefaultPortSignatures.findIndex(s => s.match.test(lineContent)) ?? null;
-        }
+        activeSignature = DefaultPortSignatures.findIndex(s => s.match.test(lineContent));
 
-        if (activeSignature) {
+        if (activeSignature < 0) {
+            activeSignature = null;
+        } else {
             if (DefaultPortSignatures[activeSignature].info.parameters?.length ?? 0 > 1) {
                 activeParameter = (lineContent.indexOf(':') > -1) ? 1 : 0; // TODO: this is incorrect for the "hostIp:hostPort:containerPort" format due to two `:`
             } else {

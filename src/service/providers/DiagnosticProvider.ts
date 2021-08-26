@@ -25,7 +25,7 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
                         yamlRangeToLspRange(params.document.textDocument, error.pos),
                         error.message,
                         error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
-                        error.code
+                        error.code,
                     )
                 );
             }
