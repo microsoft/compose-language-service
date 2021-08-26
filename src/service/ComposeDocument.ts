@@ -38,7 +38,7 @@ export class ComposeDocument {
     public lineAt(line: Position | number): string | undefined {
         // Flatten to a position at the start of the line
         const start = (typeof line === 'number') ? Position.create(line, 0) : Position.create(line.line, 0);
-        const end = Position.create(start.line, 1000000); // The stated behavior of character position is to roll back to line length if it exceeds the line length. This will work for any line <1m characters. That should cover most of them.
+        const end = Position.create(start.line, 1000 * 1000); // The stated behavior of character position is to roll back to line length if it exceeds the line length. This will work for any line <1m characters. That should cover most of them.
 
         if (start.line > this.textDocument.lineCount) {
             return undefined;
