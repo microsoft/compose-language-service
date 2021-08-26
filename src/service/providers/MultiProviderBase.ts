@@ -6,6 +6,7 @@
 import { CancellationToken, Position, ResultProgressReporter, WorkDoneProgressReporter } from 'vscode-languageserver';
 import { ExtendedParams, ExtendedPositionParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
+import { Lazy } from '../utils/Lazy';
 import { ProviderBase } from './ProviderBase';
 
 export abstract class MultiProviderBase<P extends ExtendedParams & { position: Position }, R, PR> extends ProviderBase<P, R | undefined, PR, never> {
@@ -20,7 +21,7 @@ export abstract class MultiProviderBase<P extends ExtendedParams & { position: P
         // Does that apply only to signatures or to completions too?
         const extendedParams: P & ExtendedPositionParams = {
             ...params,
-            extendedPosition: ExtendedPosition.build(params.document, params.position),
+            extendedPosition: new Lazy<ExtendedPosition>(() => ExtendedPosition.build(params.document, params.position)),
         };
 
         const subresults: (R | undefined)[] = [];
