@@ -119,13 +119,7 @@ export class ComposeLanguageService implements Disposable {
 
                 return await Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
             } catch (error) {
-                if (error instanceof ResponseError) {
-                    return error;
-                } else if (error instanceof Error) {
-                    return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error);
-                }
-
-                return new ResponseError(ErrorCodes.InternalError, error.toString());
+                return ComposeLanguageService.flattenError(error);
             }
         });
     }
@@ -145,14 +139,19 @@ export class ComposeLanguageService implements Disposable {
 
                 return await Promise.resolve(handler(extendedParams));
             } catch (error) {
-                if (error instanceof ResponseError) {
-                    return error;
-                } else if (error instanceof Error) {
-                    return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error);
-                }
-
-                return new ResponseError(ErrorCodes.InternalError, error.toString());
+                return ComposeLanguageService.flattenError(error);
             }
         }, this, this.subscriptions);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private static flattenError<E>(error: any): ResponseError<E> {
+        if (error instanceof ResponseError) {
+            return error;
+        } else if (error instanceof Error) {
+            return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error as unknown as E);
+        }
+
+        return new ResponseError(ErrorCodes.InternalError, error.toString());
     }
 }
