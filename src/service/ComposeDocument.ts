@@ -9,9 +9,9 @@ import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yam
 import { Lazy } from './utils/Lazy';
 
 export class ComposeDocument {
-    public readonly fullCst = new Lazy(this.buildFullCst);
-    public readonly documentCst = new Lazy(this.buildDocumentCst);
-    public readonly yamlDocument = new Lazy(this.buildYamlDocument);
+    public readonly fullCst = new Lazy(() => this.buildFullCst());
+    public readonly documentCst = new Lazy(() => this.buildDocumentCst());
+    public readonly yamlDocument = new Lazy(() => this.buildYamlDocument());
 
     private constructor(
         public readonly textDocument: TextDocument,
