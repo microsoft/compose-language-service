@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-    ClientCapabilities,
     Connection,
     Disposable,
     ErrorCodes,
@@ -35,14 +34,14 @@ export class ComposeLanguageService implements Disposable {
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
-        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(this).on);
+        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider().on);
 
         // Hook up all the LSP listeners, which do not create Disposables for some reason
-        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(this));
-        this.createLspHandler(this.connection.onHover, new KeyHoverProvider(this));
-        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider(this));
-        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider(this));
-        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider(this));
+        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider());
+        this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
+        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider());
+        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
+        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
 
         // Start the document listener
         this.documentManager.listen(this.connection);
@@ -93,10 +92,6 @@ export class ComposeLanguageService implements Disposable {
                 },
             },
         };
-    }
-
-    public get clientCapabilities(): ClientCapabilities {
-        return this.clientParams.capabilities;
     }
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
