@@ -3,19 +3,20 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-const langClient = require("vscode-languageclient/node");
+import * as vscode from 'vscode';
+import { LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
-exports.activate = function activate(context) {
+export function activate(context: vscode.ExtensionContext): void {
     const serverModule = context.asAbsolutePath('../../../lib/server.js');
 
     const serverOptions = {
         run: {
             module: serverModule,
-            transport: langClient.TransportKind.ipc,
+            transport: TransportKind.ipc,
         },
         debug: {
             module: serverModule,
-            transport: langClient.TransportKind.ipc,
+            transport: TransportKind.ipc,
             options: { execArgv: ['--nolazy', '--inspect=6009'] },
         },
     };
@@ -28,9 +29,11 @@ exports.activate = function activate(context) {
         ],
     };
 
-    const client = new langClient.LanguageClient('compose-language-server', serverOptions, clientOptions, true);
+    const client = new LanguageClient('compose-language-server', serverOptions, clientOptions, true);
 
     context.subscriptions.push(client.start());
 }
 
-exports.deactivate = function deactivate() { }
+export function deactivate(): void {
+    // Do nothing
+}
