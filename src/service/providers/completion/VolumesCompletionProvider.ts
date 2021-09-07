@@ -3,17 +3,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, CompletionItem, CompletionParams, InsertTextFormat, TextEdit } from 'vscode-languageserver';
+import { CancellationToken, CompletionItem, CompletionParams } from 'vscode-languageserver';
 import { ExtendedPositionParams } from '../../ExtendedParams';
 import { SubproviderBase } from '../MultiProviderBase';
+import { CompletionCollection } from './CompletionCollection';
 
-interface CompletionMatcher {
-    matcher: RegExp;
-    label: string;
-    insertionText: string;
-}
-
-const VolumeMatchers: CompletionMatcher[] = [
+const VolumesCompletions = new CompletionCollection(...[
     {
         matcher: /(\s*-\s*)(?<leadingQuote>")?\2\s*$/i,
         label: 'hostPath:containerPath:mode',
@@ -39,7 +34,7 @@ const VolumeMatchers: CompletionMatcher[] = [
         label: ':rw',
         insertionText: 'rw',
     },
-];
+]);
 
 export class VolumesCompletionProvider implements SubproviderBase<CompletionParams & ExtendedPositionParams, CompletionItem[] | undefined, never> {
     public on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken): CompletionItem[] | undefined {
@@ -47,19 +42,6 @@ export class VolumesCompletionProvider implements SubproviderBase<CompletionPara
             return undefined;
         }
 
-        const results: CompletionItem[] = [];
-
-        for (const m of VolumeMatchers) {
-            const match = m.matcher.exec(params.document.lineAt(params.position));
-
-            if (match) {
-                const ci = CompletionItem.create(m.label);
-                ci.insertTextFormat = InsertTextFormat.Snippet;
-                ci.textEdit = TextEdit.insert(params.position, m.insertionText);
-                results.push(ci);
-            }
-        }
-
-        return results;
+        return VolumesCompletions.getActiveCompletionItems(params);
     }
 }

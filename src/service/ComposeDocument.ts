@@ -19,14 +19,14 @@ export class ComposeDocument {
 
     public lineAt(line: Position | number): string {
         // Flatten to a position at the start of the line
-        const start = (typeof line === 'number') ? Position.create(line, 0) : Position.create(line.line, 0);
-        const end = Position.create(start.line, 1000 * 1000); // The stated behavior of character position is to roll back to line length if it exceeds the line length. This will work for any line <1m characters. That should cover most of them.
+        const startOfLine = (typeof line === 'number') ? Position.create(line, 0) : Position.create(line.line, 0);
+        const endOfLine = Position.create(startOfLine.line, 1000 * 1000); // The stated behavior of character position is to roll back to line length if it exceeds the line length. This will work for any line <1m characters. That should cover most of them.
 
-        if (start.line > this.textDocument.lineCount) {
-            throw new Error(`Requested line ${start.line} is out of bounds.`);
+        if (startOfLine.line > this.textDocument.lineCount) {
+            throw new Error(`Requested line ${startOfLine.line} is out of bounds.`);
         }
 
-        return this.textDocument.getText(Range.create(start, end));
+        return this.textDocument.getText(Range.create(startOfLine, endOfLine));
     }
 
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
