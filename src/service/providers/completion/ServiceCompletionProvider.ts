@@ -29,9 +29,28 @@ const ServiceCompletions = new CompletionCollection(...[
     },
 ]);
 
+/**
+ * The position given when the cursor is inbetween the service key and first properties, i.e. at the | below:
+services:
+  foo:
+    |
+    a: b
+ */
+const PositionAfterServiceNamePathRegex = /^\/services\/<sep>$/i; // e.g. /services/<sep>
+
+/**
+ * The position given when the cursor is inbetween properties in a service, i.e. at the | below:
+services:
+  foo:
+    a: b
+    |
+ */
+const PositionInServiceConfigPathRegex = /^\/services\/[\w -]+\/<start>$/i; // e.g. /services/foo/<start>
+
 export class ServiceCompletionProvider implements SubproviderBase<CompletionParams & ExtendedPositionParams, CompletionItem[] | undefined, never> {
     public on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken): CompletionItem[] | undefined {
-        if (!/^\/services\/[^/]*$/i.test(params.extendedPosition.value.logicalPath)) {
+        if (!PositionAfterServiceNamePathRegex.test(params.extendedPosition.value.logicalPath) &&
+            !PositionInServiceConfigPathRegex.test(params.extendedPosition.value.logicalPath)) {
             return undefined;
         }
 

@@ -35,10 +35,6 @@ export class ComposeDocument {
         return this.textDocument.getText(Range.create(startOfLine, endOfLine));
     }
 
-    public logicalPathAt(position: Position): string {
-        return '';
-    }
-
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
         create: (uri, languageId, version, content) => new ComposeDocument(TextDocument.create(uri, languageId, version, content)),
         update: (document, changes, version) => new ComposeDocument(TextDocument.update(document.textDocument, changes, version)),

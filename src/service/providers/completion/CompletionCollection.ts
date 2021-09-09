@@ -6,16 +6,11 @@
 import { CompletionItem, CompletionParams, InsertTextFormat, TextEdit } from 'vscode-languageserver';
 import { ExtendedParams } from '../../ExtendedParams';
 
-interface ExtendedCompletionItem extends Partial<CompletionItem> {
+interface ExtendedCompletionItem extends CompletionItem {
     /**
      * The matching expression
      */
     matcher?: RegExp;
-
-    /**
-     * Label is required
-     */
-    label: string;
 
     /**
      * The insertion text does not need to be the same as the label
