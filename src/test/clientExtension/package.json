@@ -8,8 +8,11 @@
     "activationEvents": [
         "*"
     ],
-    "main": "./extension.js",
+    "main": "./dist/extension.js",
     "dependencies": {
         "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/vscode": "1.52"
     }
 }

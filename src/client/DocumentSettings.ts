@@ -3,7 +3,29 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { ProtocolNotificationType, ProtocolRequestType } from 'vscode-languageserver-protocol';
+import { TextDocumentIdentifier } from 'vscode-languageserver-types';
+
+// TODO: should we get these from @types/vscode instead?
+export type LF = 1;
+export type CRLF = 2;
+
 export interface DocumentSettings {
     tabSize: number;
-    lineEndings: string;
+    eol: LF | CRLF;
 }
+
+export interface DocumentSettingsParams {
+    textDocument: TextDocumentIdentifier;
+}
+
+export interface DocumentSettingsClientCapabilities {
+    request: boolean;
+    notify: boolean;
+}
+
+export type DocumentSettingsNotificationParams = DocumentSettingsParams & DocumentSettings;
+
+export const DocumentSettingsRequestType = new ProtocolRequestType<DocumentSettingsParams, DocumentSettings, never, never, never>('$/textDocument/documentSettings');
+
+export const DocumentSettingsNotificationType = new ProtocolNotificationType<DocumentSettingsNotificationParams, never>('$/textDocument/documentSettings/didChange');
