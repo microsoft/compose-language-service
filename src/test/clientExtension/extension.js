@@ -4,6 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 const langClient = require("vscode-languageclient/node");
+const vscode = require("vscode");
+
+let client;
 
 exports.activate = function activate(context) {
     const serverModule = context.asAbsolutePath('../../../lib/server.js');
@@ -28,9 +31,35 @@ exports.activate = function activate(context) {
         ],
     };
 
-    const client = new langClient.LanguageClient('compose-language-server', serverOptions, clientOptions, true);
+    client = new langClient.LanguageClient('compose-language-server', serverOptions, clientOptions, true);
+
+    client.registerFeature(DocumentSettingsFeature);
 
     context.subscriptions.push(client.start());
 }
 
 exports.deactivate = function deactivate() { }
+
+let disposable;
+
+const DocumentSettingsFeature = {
+    fillClientCapabilities: (clientCapabilities) => {
+        clientCapabilities.experimental = {
+            documentSettings: {}
+        };
+    },
+
+    initialize: (serverCapabilities, documentSelector) => {
+        disposable = client.onRequest('$/documentSettings', (p) => {
+            const editorWindow = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === p.textDocument.uri);
+            return {
+                tabSize: editorWindow.options.tabSize,
+                lineEndings: '\n',
+            };
+        });
+    },
+
+    dispose: () => {
+        disposable.dispose();
+    },
+};
