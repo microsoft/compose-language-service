@@ -9,11 +9,11 @@ import { LanguageClient } from 'vscode-languageclient/node';
 
 import { DocumentSettings, DocumentSettingsClientCapabilities, DocumentSettingsNotificationParams, DocumentSettingsParams } from '../../../lib/client/DocumentSettings'; // Dev-time-only imports
 
-// Duplicating this from DocumentSettings means the above import can stay dev-time-only
+// Duplicating these from src/client/DocumentSettings means the above imports can stay dev-time-only
 const DocumentSettingsRequestMethodType = '$/textDocument/documentSettings';
 const DocumentSettingsChangeNotificationMethodType = '$/textDocument/documentSettings/didChange';
 
-export class DocumentSettingsFeature implements StaticFeature {
+export class DocumentSettingsClientFeature implements StaticFeature {
     private disposables: vscode.Disposable[] = [];
 
     public constructor(private readonly client: LanguageClient) { }
@@ -26,7 +26,7 @@ export class DocumentSettingsFeature implements StaticFeature {
 
         capabilities.experimental = {
             ...capabilities.experimental,
-            documentSettings: documentSettings,
+            documentSettings,
         };
     }
 
