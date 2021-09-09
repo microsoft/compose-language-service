@@ -8,6 +8,12 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 import { Lazy } from './utils/Lazy';
 
+const EmptyDocumentCST: CST.Document = {
+    type: 'document',
+    offset: 0,
+    start: [],
+};
+
 export class ComposeDocument {
     public readonly fullCst = new Lazy(() => this.buildFullCst());
     public readonly documentCst = new Lazy(() => this.buildDocumentCst());
@@ -29,6 +35,10 @@ export class ComposeDocument {
         return this.textDocument.getText(Range.create(startOfLine, endOfLine));
     }
 
+    public logicalPathAt(position: Position): string {
+        return '';
+    }
+
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
         create: (uri, languageId, version, content) => new ComposeDocument(TextDocument.create(uri, languageId, version, content)),
         update: (document, changes, version) => new ComposeDocument(TextDocument.update(document.textDocument, changes, version)),
@@ -41,14 +51,8 @@ export class ComposeDocument {
     private buildDocumentCst(): CST.Document {
         // The CST can consist of more than just the document
         // Get the first `type === 'document'` item out of the list; this is the actual document
-        const documentCst: CST.Document | undefined = this.fullCst.value.find(t => t.type === 'document') as CST.Document;
-
-        if (!documentCst) {
-            // TODO: empty documents are a normal thing but will not have a Document token, that should be handled differently than erroring
-            throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
-        }
-
-        return documentCst;
+        // If there isn't one, return `EmptyDocumentCST`
+        return this.fullCst.value.find(t => t.type === 'document') as CST.Document || EmptyDocumentCST;
     }
 
     private buildYamlDocument(): YamlDocument {
