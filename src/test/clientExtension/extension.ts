@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
-import { DocumentSettingsFeature } from './DocumentSettingsFeature';
+import { DocumentSettingsClientFeature } from './DocumentSettingsClientFeature';
 
 export function activate(context: vscode.ExtensionContext): void {
     const serverModule = context.asAbsolutePath('../../../lib/server.js');
@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext): void {
     };
 
     const client = new LanguageClient('compose-language-server', serverOptions, clientOptions, true);
-    client.registerFeature(new DocumentSettingsFeature(client));
+    client.registerFeature(new DocumentSettingsClientFeature(client));
 
     context.subscriptions.push(client.start());
 }
