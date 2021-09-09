@@ -31,31 +31,37 @@ export class DocumentSettingsClientFeature implements StaticFeature {
     }
 
     public initialize(): void {
-        this.disposables.push(this.client.onRequest(
-            DocumentSettingsRequestMethodType,
-            (params: DocumentSettingsParams): DocumentSettings | undefined => {
-                const textEditor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === params.textDocument.uri);
+        this.disposables.push(
+            this.client.onRequest(
+                DocumentSettingsRequestMethodType,
+                (params: DocumentSettingsParams): DocumentSettings | undefined => {
+                    const textEditor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === params.textDocument.uri);
 
-                if (!textEditor) {
-                    return undefined;
+                    if (!textEditor) {
+                        return undefined;
+                    }
+
+                    return {
+                        eol: textEditor.document.eol,
+                        tabSize: Number(textEditor.options.tabSize),
+                    };
                 }
+            )
+        );
 
-                return {
-                    eol: textEditor.document.eol,
-                    tabSize: Number(textEditor.options.tabSize),
-                };
-            }
-        ));
+        this.disposables.push(
+            vscode.window.onDidChangeTextEditorOptions(
+                (e: vscode.TextEditorOptionsChangeEvent) => {
+                    const params: DocumentSettingsNotificationParams = {
+                        textDocument: { uri: e.textEditor.document.uri.toString() },
+                        eol: e.textEditor.document.eol,
+                        tabSize: Number(e.options.tabSize),
+                    };
 
-        this.disposables.push(vscode.window.onDidChangeTextEditorOptions((e: vscode.TextEditorOptionsChangeEvent) => {
-            const params: DocumentSettingsNotificationParams = {
-                textDocument: { uri: e.textEditor.document.uri.toString() },
-                eol: e.textEditor.document.eol,
-                tabSize: Number(e.options.tabSize),
-            };
-
-            this.client.sendNotification(DocumentSettingsChangeNotificationMethodType, params);
-        }))
+                    this.client.sendNotification(DocumentSettingsChangeNotificationMethodType, params);
+                }
+            )
+        );
     }
 
     public dispose(): void {
