@@ -21,13 +21,13 @@ export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams,
 
         const extendedPosition = ExtendedPosition.build(params.document, params.position);
 
-        if (extendedPosition.itemType === 'key' && CST.isScalar(extendedPosition.item.key)) {
+        if (extendedPosition.itemType === 'key' && CST.isScalar(extendedPosition.parent.key)) {
             const keyInfo = ComposeKeyInfo.find((k) => k.pathRegex.test(extendedPosition.logicalPath));
 
             if (keyInfo) {
                 return {
                     contents: (preferMarkdown && keyInfo.markdownContents) || keyInfo.plaintextContents,
-                    range: yamlRangeToLspRange(params.document.textDocument, [extendedPosition.item.key.offset, extendedPosition.item.key.offset + extendedPosition.item.key.source.length]),
+                    range: yamlRangeToLspRange(params.document.textDocument, [extendedPosition.parent.key.offset, extendedPosition.parent.key.offset + extendedPosition.parent.key.source.length]),
                 };
             }
         }

@@ -10,6 +10,7 @@ import { CompletionCollection } from './CompletionCollection';
 
 const VolumesCompletions = new CompletionCollection(...[
     {
+        // TODO: here and elsewhere: comments / examples explaining these regexs
         matcher: /(\s*-\s*)(?<leadingQuote>")?\2\s*$/i,
         label: 'hostPath:containerPath:mode',
         insertionText: '${1:hostPath}:${2:containerPath}:${3|ro,rw|}$0',

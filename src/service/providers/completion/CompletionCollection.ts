@@ -6,8 +6,16 @@
 import { CompletionItem, CompletionParams, InsertTextFormat, TextEdit } from 'vscode-languageserver';
 import { ExtendedParams } from '../../ExtendedParams';
 
-interface ExtendedCompletionItem extends CompletionItem {
-    matcher: RegExp;
+interface ExtendedCompletionItem extends Partial<CompletionItem> {
+    /**
+     * The matching expression
+     */
+    matcher?: RegExp;
+
+    /**
+     * Label is required
+     */
+    label: string;
 
     /**
      * The insertion text does not need to be the same as the label
@@ -20,12 +28,20 @@ export class CompletionCollection extends Array<ExtendedCompletionItem> {
         const results: CompletionItem[] = [];
 
         for (const m of this) {
-            const match = m.matcher.exec(params.document.lineAt(params.position));
+            const match = m.matcher?.exec(params.document.lineAt(params.position));
 
-            if (match) {
+            if (match || !m.matcher) {
                 const ci = CompletionItem.create(m.label);
-                ci.insertTextFormat = InsertTextFormat.Snippet;
+                ci.insertTextFormat = m.insertTextFormat ?? InsertTextFormat.Snippet;
                 ci.textEdit = TextEdit.insert(params.position, m.insertionText);
+
+                // Copy additional properties
+                // TODO: this doesn't copy everything; what else should be added?
+                ci.detail = m.detail;
+                ci.documentation = m.documentation;
+                ci.commitCharacters = m.commitCharacters;
+                ci.filterText = m.filterText;
+
                 results.push(ci);
             }
         }
