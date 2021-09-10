@@ -13,15 +13,15 @@ const dockerHubImageRegex = /^(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const dockerHubNamespacedImageRegex = /^(?<namespace>[a-z0-9]+)\/(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageName>[\w.-]+)(?<tag>:[\w.-]+)?$/i;
 
-export class ImageLinkProvider extends ProviderBase {
-    public onDocumentLinks(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): DocumentLink[] | undefined {
-        if (!this.clientCapabilities.textDocument?.documentLink) {
+export class ImageLinkProvider extends ProviderBase<DocumentLinkParams & ExtendedParams, DocumentLink[] | undefined, never, never> {
+    public on(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): DocumentLink[] | undefined {
+        if (!params.clientCapabilities.textDocument?.documentLink) {
             return undefined;
         }
 
         const results: DocumentLink[] = [];
 
-        const serviceMap = params.document.yamlDocument.getIn(['services']);
+        const serviceMap = params.document.yamlDocument.value.getIn(['services']);
         if (isMap(serviceMap)) {
             for (const service of serviceMap.items) {
                 // Within each loop we'll check for cancellation (though this is expected to be very fast)

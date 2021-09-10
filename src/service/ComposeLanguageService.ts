@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-    ClientCapabilities,
     Connection,
     Disposable,
     ErrorCodes,
@@ -26,6 +25,7 @@ import { DiagnosticProvider } from './providers/DiagnosticProvider';
 import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
+import { ProviderBase } from './providers/ProviderBase';
 import { MultiSignatureHelpProvider } from './providers/signatureHelp/MultiSignatureHelpProvider';
 
 export class ComposeLanguageService implements Disposable {
@@ -34,14 +34,14 @@ export class ComposeLanguageService implements Disposable {
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
-        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(this).onDidChangeContent);
+        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider().on);
 
         // Hook up all the LSP listeners, which do not create Disposables for some reason
-        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(this).on);
-        this.createLspHandler(this.connection.onHover, new KeyHoverProvider(this).onHover);
-        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider(this).on);
-        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider(this).onDocumentLinks);
-        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider(this).onDocumentFormatting);
+        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider());
+        this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
+        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider());
+        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
+        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
 
         // Start the document listener
         this.documentManager.listen(this.connection);
@@ -56,19 +56,20 @@ export class ComposeLanguageService implements Disposable {
     public get capabilities(): ServerCapabilities {
         return {
             textDocumentSync: {
-                openClose: false,
+                openClose: true,
                 change: TextDocumentSyncKind.Incremental,
                 willSave: false,
                 willSaveWaitUntil: false,
                 save: false,
             },
             completionProvider: {
-                triggerCharacters: ['-', ':'],
+                triggerCharacters: ['-', ':', ' ', '"'],
                 resolveProvider: false,
             },
             hoverProvider: true,
             signatureHelpProvider: {
                 triggerCharacters: ['-', ':'],
+                retriggerCharacters: ['\n'],
             },
             documentLinkProvider: {
                 resolveProvider: false,
@@ -93,13 +94,9 @@ export class ComposeLanguageService implements Disposable {
         };
     }
 
-    public get clientCapabilities(): ClientCapabilities {
-        return this.clientParams.capabilities;
-    }
-
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
         event: (handler: ServerRequestHandler<P, R, PR, E>) => void,
-        handler: ServerRequestHandler<P & ExtendedParams, R, PR, E>
+        handler: ProviderBase<P & ExtendedParams, R, PR, E>
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
             try {
@@ -115,15 +112,9 @@ export class ComposeLanguageService implements Disposable {
                     connection: this.connection,
                 };
 
-                return await Promise.resolve(handler.call(this, extendedParams, token, workDoneProgress, resultProgress));
+                return await Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
             } catch (error) {
-                if (error instanceof ResponseError) {
-                    return error;
-                } else if (error instanceof Error) {
-                    return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error);
-                }
-
-                return new ResponseError(ErrorCodes.InternalError, error.toString());
+                return ComposeLanguageService.flattenError(error);
             }
         });
     }
@@ -141,16 +132,21 @@ export class ComposeLanguageService implements Disposable {
                     connection: this.connection,
                 };
 
-                return await Promise.resolve(handler.call(this, extendedParams));
+                return await Promise.resolve(handler(extendedParams));
             } catch (error) {
-                if (error instanceof ResponseError) {
-                    return error;
-                } else if (error instanceof Error) {
-                    return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error);
-                }
-
-                return new ResponseError(ErrorCodes.InternalError, error.toString());
+                return ComposeLanguageService.flattenError(error);
             }
         }, this, this.subscriptions);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private static flattenError<E>(error: any): ResponseError<E> {
+        if (error instanceof ResponseError) {
+            return error;
+        } else if (error instanceof Error) {
+            return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error as unknown as E);
+        }
+
+        return new ResponseError(ErrorCodes.InternalError, error.toString());
     }
 }

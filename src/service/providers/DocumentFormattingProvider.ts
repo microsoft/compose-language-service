@@ -8,13 +8,13 @@ import { ToStringOptions } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
 import { ProviderBase } from './ProviderBase';
 
-export class DocumentFormattingProvider extends ProviderBase {
-    public onDocumentFormatting(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): TextEdit[] | undefined {
-        if (!this.clientCapabilities.textDocument?.formatting) {
+export class DocumentFormattingProvider extends ProviderBase<DocumentFormattingParams & ExtendedParams, TextEdit[] | undefined, never, never> {
+    public on(params: DocumentFormattingParams & ExtendedParams, token: CancellationToken): TextEdit[] | undefined {
+        if (!params.clientCapabilities.textDocument?.formatting) {
             return undefined;
         }
 
-        if (params.document.yamlDocument.errors.length) {
+        if (params.document.yamlDocument.value.errors.length) {
             // Won't return formatting info unless the document is syntactically correct
             return undefined;
         }
@@ -30,7 +30,7 @@ export class DocumentFormattingProvider extends ProviderBase {
             params.document.textDocument.positionAt(params.document.textDocument.getText().length - 1)
         );
 
-        const formatted = params.document.yamlDocument.toString(options);
+        const formatted = params.document.yamlDocument.value.toString(options);
 
         // It's heavy-handed but the replacement is for the entire document
         // TODO is this terrible?

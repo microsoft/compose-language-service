@@ -19,13 +19,13 @@ export class ExtendedPosition {
     public static build(doc: ComposeDocument, position: Position): ExtendedPosition {
         const offset = doc.textDocument.offsetAt(position);
 
-        const { item, path } = ExtendedPosition.loadItemAndPath(doc.cst, offset);
+        const { item, path } = ExtendedPosition.loadItemAndPath(doc.documentCst.value, offset);
         if (!item || !path) {
             throw new Error(`Failed to load item at position (${position.line}, ${position.character}).`);
         }
 
         const itemType = ExtendedPosition.loadType(item, offset);
-        const logicalPath = ExtendedPosition.loadLogicalPath(doc.cst, item, path, itemType);
+        const logicalPath = ExtendedPosition.loadLogicalPath(doc.documentCst.value, item, path, itemType);
 
         return new ExtendedPosition(item, itemType, logicalPath);
     }
@@ -84,6 +84,7 @@ export class ExtendedPosition {
         return 'value';
     }
 
+    // TODO Potentially a faster but less accurate way to get the path would be to walk backwards up the document, watching the indentation
     private static loadLogicalPath(cst: CST.Document, item: CST.CollectionItem, path: CST.VisitPath, itemType: ItemType): string {
         const resultParts: string[] = [];
 

@@ -10,27 +10,27 @@ import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
-export class DiagnosticProvider extends ProviderBase {
-    public onDidChangeContent(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
-        if (!this.clientCapabilities.textDocument?.publishDiagnostics) {
+export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
+    public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
+        if (!params.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
 
         debounce(500, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
             const diagnostics: Diagnostic[] = [];
 
-            for (const error of [...params.document.yamlDocument.errors, ...params.document.yamlDocument.warnings]) {
+            for (const error of [...params.document.yamlDocument.value.errors, ...params.document.yamlDocument.value.warnings]) {
                 diagnostics.push(
                     Diagnostic.create(
                         yamlRangeToLspRange(params.document.textDocument, error.pos),
                         error.message,
                         error.name === 'YAMLWarning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
-                        error.code
+                        error.code,
                     )
                 );
             }
 
-            this.connection.sendDiagnostics({
+            params.connection.sendDiagnostics({
                 uri: params.document.textDocument.uri,
                 diagnostics: diagnostics,
             });
