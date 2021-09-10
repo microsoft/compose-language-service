@@ -10,7 +10,8 @@ import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
-// The time between when typing stops and when diagnostics will be sent
+// The time between when typing stops and when diagnostics will be sent (milliseconds)
+
 const DiagnosticDelay = 1000;
 
 export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
