@@ -14,6 +14,9 @@ const EmptyDocumentCST: CST.Document = {
     start: [],
 };
 
+// The stated behavior of character number in the `Position` class is to roll back to line length if it exceeds the line length. So, this will work for any line <1m characters. That should cover most of them.
+const MaximumLineLength = 1000 * 1000;
+
 export class ComposeDocument {
     public readonly fullCst = new Lazy(() => this.buildFullCst());
     public readonly documentCst = new Lazy(() => this.buildDocumentCst());
@@ -26,7 +29,7 @@ export class ComposeDocument {
     public lineAt(line: Position | number): string {
         // Flatten to a position at the start of the line
         const startOfLine = (typeof line === 'number') ? Position.create(line, 0) : Position.create(line.line, 0);
-        const endOfLine = Position.create(startOfLine.line, 1000 * 1000); // The stated behavior of character position is to roll back to line length if it exceeds the line length. This will work for any line <1m characters. That should cover most of them.
+        const endOfLine = Position.create(startOfLine.line, MaximumLineLength);
 
         if (startOfLine.line > this.textDocument.lineCount) {
             throw new Error(`Requested line ${startOfLine.line} is out of bounds.`);
