@@ -6,13 +6,14 @@
 import { ProtocolNotificationType, ProtocolRequestType } from 'vscode-languageserver-protocol';
 import { TextDocumentIdentifier } from 'vscode-languageserver-types';
 
-// TODO: should we get these from @types/vscode instead?
-export type LF = 1;
-export type CRLF = 2;
+// TODO: should we get these from @types/vscode instead? It seems there's some type conflict between `Thenable<T>` from @types/vscode and vscode-jsonrpc
+type LF = 1;
+type CRLF = 2;
+export type EndOfLine = LF | CRLF;
 
 export interface DocumentSettings {
     tabSize: number;
-    eol: LF | CRLF;
+    eol: EndOfLine;
 }
 
 export interface DocumentSettingsParams {
