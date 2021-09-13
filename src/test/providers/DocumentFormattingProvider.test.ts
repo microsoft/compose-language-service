@@ -3,11 +3,9 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { InitializeParams } from 'vscode-languageserver';
+// TODO
+describe('DocumentFormattingProvider', () => {
+    xit('Should fix up bad spacing without semantically changing anything');
 
-export const DefaultInitializeParams: InitializeParams = {
-    capabilities: {},
-    processId: 1,
-    rootUri: null,
-    workspaceFolders: null
-};
+    xit('Should not try formatting unless the document is syntactically correct');
+});

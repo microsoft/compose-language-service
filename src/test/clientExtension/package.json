@@ -1,0 +1,19 @@
+{
+    "name": "compose-languageserver-testclient",
+    "publisher": "ms-azuretools",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "activationEvents": [
+        "onLanguage:dockercompose",
+        "onStartupFinished"
+    ],
+    "main": "./dist/extension.js",
+    "dependencies": {
+        "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/vscode": "1.52"
+    }
+}
