@@ -6,9 +6,6 @@
 import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressReporter } from 'vscode-languageserver';
 import { ExtendedParams } from '../../ExtendedParams';
 import { MultiProviderBase } from '../MultiProviderBase';
-import { PortsCompletionProvider } from './PortsCompletionProvider';
-import { RootCompletionProvider } from './RootCompletionProvider';
-import { ServiceCompletionProvider } from './ServiceCompletionProvider';
 import { VolumesCompletionProvider } from './VolumesCompletionProvider';
 
 /**
@@ -20,9 +17,6 @@ export class MultiCompletionProvider extends MultiProviderBase<CompletionParams 
     public constructor() {
         super();
 
-        this.register(new RootCompletionProvider());
-        this.register(new ServiceCompletionProvider());
-        this.register(new PortsCompletionProvider());
         this.register(new VolumesCompletionProvider());
     }
 
