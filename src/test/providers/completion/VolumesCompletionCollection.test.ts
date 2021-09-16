@@ -4,6 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 // TODO
-describe('CompletionProvider', () => {
+describe('VolumesCompletionCollection', () => {
     xit('Should todo');
 });

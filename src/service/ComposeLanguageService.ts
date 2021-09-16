@@ -26,7 +26,6 @@ import { DocumentFormattingProvider } from './providers/DocumentFormattingProvid
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
 import { ProviderBase } from './providers/ProviderBase';
-import { MultiSignatureHelpProvider } from './providers/signatureHelp/MultiSignatureHelpProvider';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
@@ -41,7 +40,6 @@ export class ComposeLanguageService implements Disposable {
         // Hook up all the LSP listeners, which do not create Disposables for some reason
         this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider());
         this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
-        this.createLspHandler(this.connection.onSignatureHelp, new MultiSignatureHelpProvider());
         this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
         this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
 
@@ -69,25 +67,10 @@ export class ComposeLanguageService implements Disposable {
                 resolveProvider: false,
             },
             hoverProvider: true,
-            signatureHelpProvider: {
-                triggerCharacters: ['-', ':'],
-                retriggerCharacters: ['\n'],
-            },
             documentLinkProvider: {
                 resolveProvider: false,
             },
             documentFormattingProvider: true,
-            // semanticTokensProvider: {
-            //     full: {
-            //         delta: false,
-            //     },
-            //     legend: {
-            //         tokenTypes: [
-            //             SemanticTokenTypes.variable,
-            //         ],
-            //         tokenModifiers: [],
-            //     },
-            // },
             workspace: {
                 workspaceFolders: {
                     supported: true,

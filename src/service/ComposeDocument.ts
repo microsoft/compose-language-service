@@ -6,6 +6,7 @@
 import { ErrorCodes, Position, Range, ResponseError, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
+import { DocumentSettings } from '../client/DocumentSettings';
 import { Lazy } from './utils/Lazy';
 
 const EmptyDocumentCST: CST.Document = {
@@ -36,6 +37,14 @@ export class ComposeDocument {
         }
 
         return this.textDocument.getText(Range.create(startOfLine, endOfLine));
+    }
+
+    public get settings(): DocumentSettings {
+        // TODO
+        return {
+            tabSize: 2,
+            eol: 1,
+        };
     }
 
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
