@@ -11,7 +11,7 @@ type ItemType = 'start' | 'key' | 'sep' | 'value';
 
 export class ExtendedPosition {
     private constructor(
-        public readonly parent: CST.CollectionItem,
+        public readonly parentCollectionItem: CST.CollectionItem,
         public readonly itemType: ItemType,
         public readonly logicalPath: string,
     ) { }
