@@ -17,16 +17,25 @@ interface ExtendedCompletionItem extends CompletionItem {
 }
 
 export class CompletionCollection extends Array<ExtendedCompletionItem> {
-    public constructor(private readonly validPositions: RegExp[], ...items: ExtendedCompletionItem[]) {
+    public constructor(private readonly locationRequirements: CompletionLocationRequirements, ...items: ExtendedCompletionItem[]) {
         super(...items);
     }
 
     public getActiveCompletionItems(params: CompletionParams & ExtendedPositionParams): CompletionItem[] | undefined {
-        if (!this.validPositions.some(p => p.test(params.extendedPosition.value.logicalPath))) {
+        if (this.locationRequirements.logicalPaths !== undefined && !this.locationRequirements.logicalPaths.some(p => p.test(params.extendedPosition.value.logicalPath))) {
+            return undefined;
+        }
+
+        if (this.locationRequirements.indentationDepth !== undefined && this.locationRequirements.indentationDepth !== 1 /* todo */) {
             return undefined;
         }
 
         const line = params.document.lineAt(params.position);
         return this.filter(eci => !eci.matcher || eci.matcher.test(line));
     }
+}
+
+interface CompletionLocationRequirements {
+    logicalPaths?: RegExp[];
+    indentationDepth?: number;
 }

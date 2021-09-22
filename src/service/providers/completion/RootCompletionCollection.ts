@@ -9,7 +9,7 @@ import { CompletionCollection } from './CompletionCollection';
 const PositionAtRootRegex = /^\/$/i; // e.g. `/`
 
 export const RootCompletionCollection = new CompletionCollection(
-    [PositionAtRootRegex],
+    { logicalPaths: [PositionAtRootRegex], indentationDepth: 0 },
     ...[
         {
             label: 'services:',

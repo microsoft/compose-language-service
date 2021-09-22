@@ -25,7 +25,7 @@ services:
 const PositionInServiceConfigPathRegex = /^\/services\/[\w -]+\/<start>$/i; // e.g. /services/foo/<start>
 
 export const ServiceCompletionCollection = new CompletionCollection(
-    [PositionAfterServiceNamePathRegex, PositionInServiceConfigPathRegex],
+    { logicalPaths: [PositionAfterServiceNamePathRegex, PositionInServiceConfigPathRegex], indentationDepth: 2 },
     ...[
         {
             label: 'build:',
