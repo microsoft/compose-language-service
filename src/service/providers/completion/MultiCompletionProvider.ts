@@ -29,11 +29,13 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
         ];
     }
 
-    public override on(params: CompletionParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): CompletionItem[] | undefined {
+    public override async on(params: CompletionParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
         const extendedParams: CompletionParams & ExtendedPositionParams = {
             ...params,
             extendedPosition: new Lazy<ExtendedPosition>(() => ExtendedPosition.build(params.document, params.position)),
         };
+
+        extendedParams.path = await params.document.pathAt(extendedParams);
 
         const results: CompletionItem[] = [];
 
@@ -43,7 +45,7 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
                 return undefined;
             }
 
-            const subresults = collection.getActiveCompletionItems(extendedParams);
+            const subresults = await collection.getActiveCompletionItems(extendedParams);
 
             if (subresults) {
                 results.push(...subresults);

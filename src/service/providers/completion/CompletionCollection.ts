@@ -21,12 +21,12 @@ export class CompletionCollection extends Array<ExtendedCompletionItem> {
         super(...items);
     }
 
-    public getActiveCompletionItems(params: CompletionParams & ExtendedPositionParams): CompletionItem[] | undefined {
-        if (this.locationRequirements.logicalPaths !== undefined && !this.locationRequirements.logicalPaths.some(p => p.test(params.extendedPosition.value.logicalPath))) {
+    public async getActiveCompletionItems(params: CompletionParams & ExtendedPositionParams): Promise<CompletionItem[] | undefined> {
+        if (this.locationRequirements.logicalPaths !== undefined && !this.locationRequirements.logicalPaths.some(p => p.test(params.path ?? ''))) {
             return undefined;
         }
 
-        if (this.locationRequirements.indentationDepth !== undefined && this.locationRequirements.indentationDepth !== 1 /* todo */) {
+        if (this.locationRequirements.indentationDepth !== undefined && this.locationRequirements.indentationDepth !== (await params.document.indentationDepthAt(params))) {
             return undefined;
         }
 

@@ -18,6 +18,7 @@ import {
     TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
+import { DocumentSettingsNotificationParams, DocumentSettingsNotificationType } from '../client/DocumentSettings';
 import { ComposeDocument } from './ComposeDocument';
 import { ExtendedParams } from './ExtendedParams';
 import { MultiCompletionProvider } from './providers/completion/MultiCompletionProvider';
@@ -42,6 +43,9 @@ export class ComposeLanguageService implements Disposable {
         this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
         this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
         this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
+
+        // Hook up one additional notification handler
+        this.connection.onNotification(DocumentSettingsNotificationType, this.onDidChangeDocumentSettings);
 
         // Start the document listener
         this.documentManager.listen(this.connection);
@@ -77,6 +81,14 @@ export class ComposeLanguageService implements Disposable {
                 },
             },
         };
+    }
+
+    private onDidChangeDocumentSettings(params: DocumentSettingsNotificationParams): void {
+        const composeDoc = this.documentManager.get(params.textDocument.uri);
+
+        if (composeDoc) {
+            composeDoc.updateSettings(params);
+        }
     }
 
     private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
