@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { NotificationType, RequestType } from 'vscode-languageserver-protocol';
-import { TextDocumentIdentifier } from 'vscode-languageserver-types';
+import { TextDocumentParams } from '../service/ExtendedParams';
 
-// TODO: should we get these from @types/vscode instead? It seems there's some type conflict between `Thenable<T>` from @types/vscode and vscode-jsonrpc
+// TODO: should we get these from @types/vscode instead? It seems there's some type conflict between `Thenable<T>` from @types/vscode and vscode-jsonrpc preventing @types/vscode from working nicely
 export const LF = 1;
 export const CRLF = 2;
 type EndOfLine = typeof LF | typeof CRLF;
@@ -16,9 +16,7 @@ export interface DocumentSettings {
     eol: EndOfLine;
 }
 
-export interface DocumentSettingsParams {
-    textDocument: TextDocumentIdentifier;
-}
+export type DocumentSettingsParams = TextDocumentParams;
 
 export interface DocumentSettingsClientCapabilities {
     request: boolean;
@@ -28,5 +26,4 @@ export interface DocumentSettingsClientCapabilities {
 export type DocumentSettingsNotificationParams = DocumentSettingsParams & DocumentSettings;
 
 export const DocumentSettingsRequestType = new RequestType<DocumentSettingsParams, DocumentSettings, never>('$/textDocument/documentSettings');
-
 export const DocumentSettingsNotificationType = new NotificationType<DocumentSettingsNotificationParams>('$/textDocument/documentSettings/didChange');

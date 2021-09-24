@@ -13,14 +13,13 @@ import {
     ServerCapabilities,
     ServerRequestHandler,
     TextDocumentChangeEvent,
-    TextDocumentIdentifier,
     TextDocuments,
     TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
 import { DocumentSettingsNotificationParams, DocumentSettingsNotificationType } from '../client/DocumentSettings';
 import { ComposeDocument } from './ComposeDocument';
-import { ExtendedParams } from './ExtendedParams';
+import { ExtendedParams, TextDocumentParams } from './ExtendedParams';
 import { MultiCompletionProvider } from './providers/completion/MultiCompletionProvider';
 import { DiagnosticProvider } from './providers/DiagnosticProvider';
 import { DocumentFormattingProvider } from './providers/DocumentFormattingProvider';
@@ -91,7 +90,7 @@ export class ComposeLanguageService implements Disposable {
         }
     }
 
-    private createLspHandler<P extends { textDocument: TextDocumentIdentifier }, R, PR, E>(
+    private createLspHandler<P extends TextDocumentParams, R, PR, E>(
         event: (handler: ServerRequestHandler<P, R, PR, E>) => void,
         handler: ProviderBase<P & ExtendedParams, R, PR, E>
     ): void {
@@ -124,6 +123,7 @@ export class ComposeLanguageService implements Disposable {
             try {
                 const extendedParams = {
                     ...params,
+                    textDocument: params.document.id,
                     document: params.document,
                     clientCapabilities: this.clientParams.capabilities,
                     connection: this.connection,

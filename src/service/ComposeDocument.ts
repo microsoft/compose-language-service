@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ErrorCodes, Position, Range, ResponseError, TextDocumentsConfiguration } from 'vscode-languageserver';
+import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequestType, LF } from '../client/DocumentSettings';
@@ -29,6 +29,12 @@ export class ComposeDocument {
     /* private */ #textDocument: TextDocument;
     public get textDocument(): TextDocument {
         return this.#textDocument;
+    }
+
+    public get id(): TextDocumentIdentifier {
+        return {
+            uri: this.textDocument.uri,
+        };
     }
 
     private constructor(doc: TextDocument) {
@@ -126,13 +132,13 @@ export class ComposeDocument {
     public async getSettings(params: ExtendedParams): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
         if (!this.documentSettings && params.clientCapabilities.experimental?.documentSettings?.request) {
-            const result = await params.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequestType, { textDocument: { uri: this.textDocument.uri } });
+            const result = await params.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequestType, { textDocument: this.id });
             if (result) {
                 this.documentSettings = result;
             }
         }
 
-        // If the capability is not present, or the above didn't get a result, try heuristically guessing
+        // If the capability is not present, or the above didn't get a result for some reason, try heuristically guessing
         if (!this.documentSettings) {
             this.documentSettings = this.guessDocumentSettings();
         }
@@ -178,9 +184,9 @@ export class ComposeDocument {
         // For line endings, see if there are any \r
         const eol = /\r/ig.test(documentText) ? CRLF : LF;
 
-        // For tab size, look for the first key with nonzero indentation. If none, assume 2.
+        // For tab size, look for the first key with nonzero indentation. If none found, assume 2.
         let tabSize = 2;
-        const indentedKeyLineMatch = /^(?<indentation>[ ]+)(?<key>[\w-]+:$)/im.exec(documentText);
+        const indentedKeyLineMatch = /^(?<indentation>[ ]+)(?<key>[\w-]+:\s*)$/im.exec(documentText);
 
         if (indentedKeyLineMatch?.groups?.['indentation']) {
             tabSize = indentedKeyLineMatch.groups['indentation'].length;
