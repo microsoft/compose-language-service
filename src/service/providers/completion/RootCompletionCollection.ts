@@ -12,6 +12,18 @@ export const RootCompletionCollection = new CompletionCollection(
     { logicalPaths: [PositionAtRootRegex], indentationDepth: 0 },
     ...[
         {
+            label: 'configs:',
+            insertText: 'configs:\n',
+        },
+        {
+            label: 'networks:',
+            insertText: 'networks:\n',
+        },
+        {
+            label: 'secrets:',
+            insertText: 'secrets:\n',
+        },
+        {
             label: 'services:',
             insertText: 'services:\n',
         },
@@ -23,10 +35,6 @@ export const RootCompletionCollection = new CompletionCollection(
         {
             label: 'volumes:',
             insertText: 'volumes:\n',
-        },
-        {
-            label: 'networks:',
-            insertText: 'networks:\n',
         },
     ]
 );
