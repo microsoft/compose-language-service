@@ -62,73 +62,6 @@ export class ComposeDocument {
         return this.textDocument.getText(Range.create(startOfLine, endOfLine));
     }
 
-    /*public async indentationDepthAt(params: ExtendedPositionParams): Promise<number> {
-        const startOfLine = Position.create(params.position.line, 0);
-        const linePart = this.textDocument.getText(Range.create(startOfLine, params.position)); // Get the line up to the cursor position
-
-        const matchParts = /^(?<indentation>[ ]*)(?<itemIndicator>-[ ]*)?(?<content>.*)$/i.exec(linePart);
-
-        if (matchParts?.groups?.['indentation']) {
-            // TODO: should item indicator be counted as one extra indent? YAML allows for item indicators that have the `-` at the same indentation as the parent key
-            return matchParts.groups['indentation'].length / (await this.getSettings(params)).tabSize;
-        }
-
-        return 0;
-    }
-
-    public async parentKeyOf(params: ExtendedPositionParams): Promise<{ key: string, position: Position } | undefined> {
-        let startLine: number;
-        let positionIndentDepth: number;
-
-        const startOfLine = Position.create(params.position.line, 0);
-        const linePart = this.textDocument.getText(Range.create(startOfLine, params.position)); // Get the line up to the cursor position
-
-        if (/^(?<indentation>[ ]*)(?<key>[\w-]+:[ ]+)/i.test(linePart)) {
-            // First, we need to determine if this is a fully-contained `key: [value]` line, and the cursor position is after the `: `. If so, the parent key is `key`.
-            // Consequently, we will start the search below at the current line, with indentation assumed as MaximumLineLength
-            // When the search proceeds, it will terminate at the first loop with `key` as the result
-            startLine = params.position.line;
-            positionIndentDepth = MaximumLineLength;
-        } else {
-            // Otherwise, we need to roll upwards starting one line above the position, until we find a key line that is less-indented than the current line
-            startLine = params.position.line - 1;
-            positionIndentDepth = await this.indentationDepthAt(params);
-        }
-
-        for (let l = startLine; l >= 0; l--) {
-            const line = this.lineAt(l);
-            const keyMatchParts = /^(?<indentation>[ ]*)(?<key>[\w-]+:[ ]*)(?<content>.*)(?<eol>\r?\n)?$/i.exec(line);
-
-            if (keyMatchParts?.groups?.['indentation'] !== undefined && keyMatchParts?.groups?.['key']) {
-                const indentation = keyMatchParts.groups['indentation'];
-                const key = keyMatchParts.groups['key'].replace(/[\s:]/ig, '');
-                const keyPosition = Position.create(l, indentation.length);
-
-                const keyIndentDepth = await this.indentationDepthAt({ ...params, position: keyPosition });
-
-                if (keyIndentDepth < positionIndentDepth) {
-                    return {
-                        key: key,
-                        position: keyPosition,
-                    };
-                }
-            }
-        }
-
-        return undefined;
-    }
-
-    public async pathAt(params: ExtendedPositionParams): Promise<string> {
-        const pathParts: string[] = [];
-        let parent: { key: string, position: Position } | undefined = { key: '', position: params.position };
-
-        while ((parent = await this.parentKeyOf({ ...params, position: parent.position }))) {
-            pathParts.unshift(parent.key);
-        }
-
-        return '/' + pathParts.join('/');
-    }*/
-
     public async getSettings(params: ExtendedParams): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
         if (!this.documentSettings && params.clientCapabilities.experimental?.documentSettings?.request) {
@@ -148,6 +81,43 @@ export class ComposeDocument {
 
     public updateSettings(params: DocumentSettings): void {
         this.documentSettings = params;
+    }
+
+    public async getPositionInfo(params: ExtendedPositionParams): Promise<PositionInfo> {
+        const { tabSize } = await this.getSettings(params);
+        const partialPositionInfo = await this.getFirstLinePositionInfo(params, tabSize);
+        const fullPathParts = [...partialPositionInfo.pathParts];
+
+        let currentIndentDepth = partialPositionInfo.cursorIndentDepth;
+
+        for (let i = params.position.line - 1; i >= 0 && currentIndentDepth > 0; i--) {
+            const currentLine = this.lineAt(i);
+            let indentDepth = MaximumLineLength;
+            let result: RegExpExecArray | null;
+
+            /* eslint-disable @typescript-eslint/no-non-null-assertion */
+            if ((result = ItemValueRegex.exec(currentLine))) {
+                indentDepth = result.groups!['indent'].length / tabSize;
+
+                if (indentDepth < currentIndentDepth) {
+                    currentIndentDepth = indentDepth;
+                    fullPathParts.unshift(Item);
+                }
+            } else if ((result = KeyValueRegex.exec(currentLine))) {
+                indentDepth = result.groups!['indent'].length / tabSize;
+
+                if (indentDepth < currentIndentDepth) {
+                    currentIndentDepth = indentDepth;
+                    fullPathParts.unshift(result.groups!['keyName']);
+                }
+            }
+            /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        }
+
+        return {
+            path: '/' + fullPathParts.join('/'),
+            indentDepth: partialPositionInfo.cursorIndentDepth,
+        };
     }
 
     public static DocumentManagerConfig: TextDocumentsConfiguration<ComposeDocument> = {
@@ -195,43 +165,6 @@ export class ComposeDocument {
         return {
             eol,
             tabSize,
-        };
-    }
-
-    public async getPositionInfo(params: ExtendedPositionParams): Promise<PositionInfo> {
-        const { tabSize } = await this.getSettings(params);
-        const partialPositionInfo = await this.getFirstLinePositionInfo(params, tabSize);
-        const fullPathParts = [...partialPositionInfo.pathParts];
-
-        let currentIndentDepth = partialPositionInfo.cursorIndentDepth;
-
-        for (let i = params.position.line - 1; i >= 0 && currentIndentDepth > 0; i--) {
-            const currentLine = this.lineAt(i);
-            let indentDepth = MaximumLineLength;
-            let result: RegExpExecArray | null;
-
-            /* eslint-disable @typescript-eslint/no-non-null-assertion */
-            if ((result = ItemValueRegex.exec(currentLine))) {
-                indentDepth = result.groups!['indent'].length / tabSize;
-
-                if (indentDepth < currentIndentDepth) {
-                    currentIndentDepth = indentDepth;
-                    fullPathParts.unshift(Item);
-                }
-            } else if ((result = KeyValueRegex.exec(currentLine))) {
-                indentDepth = result.groups!['indent'].length / tabSize;
-
-                if (indentDepth < currentIndentDepth) {
-                    currentIndentDepth = indentDepth;
-                    fullPathParts.unshift(result.groups!['keyName']);
-                }
-            }
-            /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        }
-
-        return {
-            path: '/' + fullPathParts.join('/'),
-            indentDepth: partialPositionInfo.cursorIndentDepth,
         };
     }
 
