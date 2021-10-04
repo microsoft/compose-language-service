@@ -7,7 +7,7 @@ import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, Tex
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequestType, LF } from '../client/DocumentSettings';
-import { ExtendedParams, ExtendedPositionParams } from './ExtendedParams';
+import { ExtendedParams, ExtendedPositionParams, PositionInfo } from './ExtendedParams';
 import { Lazy } from './utils/Lazy';
 
 const EmptyDocumentCST: CST.Document = {
@@ -62,7 +62,7 @@ export class ComposeDocument {
         return this.textDocument.getText(Range.create(startOfLine, endOfLine));
     }
 
-    public async indentationDepthAt(params: ExtendedPositionParams): Promise<number> {
+    /*public async indentationDepthAt(params: ExtendedPositionParams): Promise<number> {
         const startOfLine = Position.create(params.position.line, 0);
         const linePart = this.textDocument.getText(Range.create(startOfLine, params.position)); // Get the line up to the cursor position
 
@@ -127,7 +127,7 @@ export class ComposeDocument {
         }
 
         return '/' + pathParts.join('/');
-    }
+    }*/
 
     public async getSettings(params: ExtendedParams): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
@@ -197,4 +197,137 @@ export class ComposeDocument {
             tabSize,
         };
     }
+
+    public async getPositionInfo(params: ExtendedPositionParams): Promise<PositionInfo> {
+        const { tabSize } = await this.getSettings(params);
+        const partialPositionInfo = await this.getFirstLinePositionInfo(params, tabSize);
+        const fullPathParts = [...partialPositionInfo.pathParts];
+
+        let currentIndentDepth = partialPositionInfo.cursorIndentDepth;
+
+        for (let i = params.position.line - 1; i >= 0; i--) {
+            const currentLine = this.lineAt(i);
+            let indentDepth = MaximumLineLength;
+            let result: RegExpExecArray | null;
+
+            /* eslint-disable @typescript-eslint/no-non-null-assertion */
+            if ((result = ItemValueRegex.exec(currentLine))) {
+                indentDepth = result.groups!['indent'].length / tabSize;
+
+                if (indentDepth < currentIndentDepth) {
+                    currentIndentDepth = indentDepth;
+                    fullPathParts.unshift(Item);
+                }
+            } else if ((result = KeyValueRegex.exec(currentLine))) {
+                indentDepth = result.groups!['indent'].length / tabSize;
+
+                if (indentDepth < currentIndentDepth) {
+                    currentIndentDepth = indentDepth;
+                    fullPathParts.unshift(result.groups!['keyName']);
+                }
+            }
+            /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        }
+
+        return {
+            path: '/' + fullPathParts.join('/'),
+            indentDepth: partialPositionInfo.cursorIndentDepth,
+        };
+    }
+
+    private async getFirstLinePositionInfo(params: ExtendedPositionParams, tabSize: number): Promise<{ pathParts: string[], cursorIndentDepth: number }> {
+        // For the first step, we have to consider the cursor position within the line
+        const currentLine = this.lineAt(params.position);
+        const pathParts: string[] = [];
+        let cursorIndentDepth: number;
+
+        let result: RegExpExecArray | null;
+
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
+        if ((result = ItemKeyValueRegex.exec(currentLine))) {
+            const itemSepPosition = currentLine.indexOf(result.groups!['itemInd']);
+            const keySepPosition = currentLine.indexOf(result.groups!['keyInd'], itemSepPosition);
+            const indentLength = result.groups!['indent'].length;
+            const keyName = result.groups!['keyName'];
+
+            cursorIndentDepth = indentLength / tabSize + 1; // We will add 1 to the indent depth, because YAML is too permissive and allows item lists at the same indent depth as their parent key
+
+            if (params.position.character > keySepPosition) {
+                pathParts.unshift(Value);
+                pathParts.unshift(keyName);
+                pathParts.unshift(Item);
+            } else if (params.position.character === keySepPosition) {
+                pathParts.unshift(Sep);
+                pathParts.unshift(keyName);
+                pathParts.unshift(Item);
+            } else if (params.position.character > itemSepPosition) {
+                pathParts.unshift(keyName);
+                pathParts.unshift(Item);
+            } else if (params.position.character === itemSepPosition) {
+                pathParts.unshift(Sep);
+                pathParts.unshift(Item);
+            }
+        } else if ((result = KeyValueRegex.exec(currentLine)) || (result = KeyRegex.exec(currentLine))) {
+            const keySepPosition = currentLine.indexOf(result.groups!['keyInd']);
+            const indentLength = result.groups!['indent'].length;
+            const keyName = result.groups!['keyName'];
+
+            cursorIndentDepth = indentLength / tabSize;
+
+            if (params.position.character > keySepPosition) {
+                pathParts.unshift(Value);
+                pathParts.unshift(keyName);
+            } else if (params.position.character === keySepPosition) {
+                pathParts.unshift(Sep);
+                pathParts.unshift(keyName);
+            } else if (params.position.character > indentLength) {
+                pathParts.unshift(keyName);
+            }
+        } else if ((result = ItemValueRegex.exec(currentLine))) {
+            const itemSepPosition = currentLine.indexOf(result.groups!['itemInd']);
+            const indentLength = result.groups!['indent'].length;
+
+            cursorIndentDepth = indentLength / tabSize + 1; // We will add 1 to the indent depth, because YAML is too permissive and allows item lists at the same indent depth as their parent key
+
+            if (params.position.character > itemSepPosition) {
+                pathParts.unshift(Value);
+                pathParts.unshift(Item);
+            } else if (params.position.character === itemSepPosition) {
+                pathParts.unshift(Sep);
+                pathParts.unshift(Item);
+            }
+        } else if ((result = ValueRegex.exec(currentLine))) {
+            const indentLength = result.groups!['indent'].length;
+
+            cursorIndentDepth = indentLength / tabSize;
+
+            if (params.position.character > indentLength) {
+                pathParts.unshift(Value);
+            }
+        } else if ((result = WhitespaceRegex.exec(currentLine))) {
+            const indentLength = result.groups!['indent'].length;
+
+            cursorIndentDepth = indentLength / tabSize;
+        } else {
+            // An empty line would match WhitespaceRegex but this last else makes TypeScript happier
+            cursorIndentDepth = 0;
+        }
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
+
+        return {
+            pathParts,
+            cursorIndentDepth,
+        };
+    }
 }
+
+const KeyRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))$/i;
+export const KeyValueRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/i; // TODO: Does this allow \r\n or \n as the key indicator whitespace? If so, can discard KeyRegex
+const ItemValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<value>.*)$/i;
+const ItemKeyValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+)))(?<value>.*)$/i;
+const ValueRegex = /^(?<indent> *)(?<value>.+)$/i;
+const WhitespaceRegex = /^(?<indent> *)$/i;
+
+const Value = '<value>';
+const Item = '<item>';
+const Sep = '<sep>';

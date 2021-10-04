@@ -4,9 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressReporter } from 'vscode-languageserver';
-import { ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
-import { ExtendedPosition } from '../../ExtendedPosition';
-import { Lazy } from '../../utils/Lazy';
+import { ExtendedCompletionParams, ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
 import { ProviderBase } from '../ProviderBase';
 import { CompletionCollection } from './CompletionCollection';
 import { ServiceCompletionCollection } from './ServiceCompletionCollection';
@@ -29,13 +27,11 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
         ];
     }
 
-    public override async on(params: CompletionParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
-        const extendedParams: CompletionParams & ExtendedPositionParams = {
+    public override async on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
+        const extendedParams: ExtendedCompletionParams = {
             ...params,
-            extendedPosition: new Lazy<ExtendedPosition>(() => ExtendedPosition.build(params.document, params.position)),
+            positionInfo: await params.document.getPositionInfo(params),
         };
-
-        extendedParams.path = await params.document.pathAt(extendedParams);
 
         const results: CompletionItem[] = [];
 
@@ -45,7 +41,7 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
                 return undefined;
             }
 
-            const subresults = await collection.getActiveCompletionItems(extendedParams);
+            const subresults = collection.getActiveCompletionItems(extendedParams);
 
             if (subresults) {
                 results.push(...subresults);
