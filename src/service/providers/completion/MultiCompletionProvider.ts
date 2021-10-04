@@ -7,6 +7,7 @@ import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressRe
 import { ExtendedCompletionParams, ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
 import { ProviderBase } from '../ProviderBase';
 import { CompletionCollection } from './CompletionCollection';
+import { RootCompletionCollection } from './RootCompletionCollection';
 import { ServiceCompletionCollection } from './ServiceCompletionCollection';
 import { VolumesCompletionCollection } from './VolumesCompletionCollection';
 
@@ -22,8 +23,9 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
         super();
 
         this.completionCollections = [
-            VolumesCompletionCollection,
+            RootCompletionCollection,
             ServiceCompletionCollection,
+            VolumesCompletionCollection,
         ];
     }
 

@@ -186,7 +186,7 @@ export class ComposeDocument {
 
         // For tab size, look for the first key with nonzero indentation. If none found, assume 2.
         let tabSize = 2;
-        const indentedKeyLineMatch = /^(?<indentation>[ ]+)(?<key>[\w-]+:\s*)$/im.exec(documentText);
+        const indentedKeyLineMatch = /^(?<indentation>[ ]+)(?<key>[.\w-]+:\s*)$/im.exec(documentText);
 
         if (indentedKeyLineMatch?.groups?.['indentation']) {
             tabSize = indentedKeyLineMatch.groups['indentation'].length;
@@ -205,7 +205,7 @@ export class ComposeDocument {
 
         let currentIndentDepth = partialPositionInfo.cursorIndentDepth;
 
-        for (let i = params.position.line - 1; i >= 0; i--) {
+        for (let i = params.position.line - 1; i >= 0 && currentIndentDepth > 0; i--) {
             const currentLine = this.lineAt(i);
             let indentDepth = MaximumLineLength;
             let result: RegExpExecArray | null;
@@ -235,7 +235,7 @@ export class ComposeDocument {
         };
     }
 
-    private async getFirstLinePositionInfo(params: ExtendedPositionParams, tabSize: number): Promise<{ pathParts: string[], cursorIndentDepth: number }> {
+    private getFirstLinePositionInfo(params: ExtendedPositionParams, tabSize: number): { pathParts: string[], cursorIndentDepth: number } {
         // For the first step, we have to consider the cursor position within the line
         const currentLine = this.lineAt(params.position);
         const pathParts: string[] = [];
@@ -266,8 +266,10 @@ export class ComposeDocument {
             } else if (params.position.character === itemSepPosition) {
                 pathParts.unshift(Sep);
                 pathParts.unshift(Item);
+            } else if (params.position.character < indentLength) {
+                cursorIndentDepth = params.position.character / tabSize;
             }
-        } else if ((result = KeyValueRegex.exec(currentLine)) || (result = KeyRegex.exec(currentLine))) {
+        } else if ((result = KeyValueRegex.exec(currentLine))) {
             const keySepPosition = currentLine.indexOf(result.groups!['keyInd']);
             const indentLength = result.groups!['indent'].length;
             const keyName = result.groups!['keyName'];
@@ -282,6 +284,8 @@ export class ComposeDocument {
                 pathParts.unshift(keyName);
             } else if (params.position.character > indentLength) {
                 pathParts.unshift(keyName);
+            } else if (params.position.character < indentLength) {
+                cursorIndentDepth = params.position.character / tabSize;
             }
         } else if ((result = ItemValueRegex.exec(currentLine))) {
             const itemSepPosition = currentLine.indexOf(result.groups!['itemInd']);
@@ -295,6 +299,8 @@ export class ComposeDocument {
             } else if (params.position.character === itemSepPosition) {
                 pathParts.unshift(Sep);
                 pathParts.unshift(Item);
+            } else if (params.position.character < indentLength) {
+                cursorIndentDepth = params.position.character / tabSize;
             }
         } else if ((result = ValueRegex.exec(currentLine))) {
             const indentLength = result.groups!['indent'].length;
@@ -303,11 +309,17 @@ export class ComposeDocument {
 
             if (params.position.character > indentLength) {
                 pathParts.unshift(Value);
+            } else if (params.position.character < indentLength) {
+                cursorIndentDepth = params.position.character / tabSize;
             }
         } else if ((result = WhitespaceRegex.exec(currentLine))) {
             const indentLength = result.groups!['indent'].length;
 
             cursorIndentDepth = indentLength / tabSize;
+
+            if (params.position.character < indentLength) {
+                cursorIndentDepth = params.position.character / tabSize;
+            }
         } else {
             // An empty line would match WhitespaceRegex but this last else makes TypeScript happier
             cursorIndentDepth = 0;
@@ -321,12 +333,11 @@ export class ComposeDocument {
     }
 }
 
-const KeyRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))$/i;
-export const KeyValueRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/i; // TODO: Does this allow \r\n or \n as the key indicator whitespace? If so, can discard KeyRegex
-const ItemValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<value>.*)$/i;
-const ItemKeyValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+)))(?<value>.*)$/i;
-const ValueRegex = /^(?<indent> *)(?<value>.+)$/i;
-const WhitespaceRegex = /^(?<indent> *)$/i;
+export const KeyValueRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
+const ItemValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<value>.*)$/im;
+const ItemKeyValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
+const ValueRegex = /^(?<indent> *)(?<value>\S+)$/im;
+const WhitespaceRegex = /^(?<indent> *)$/im;
 
 const Value = '<value>';
 const Item = '<item>';
