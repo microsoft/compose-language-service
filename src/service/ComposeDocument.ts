@@ -172,7 +172,7 @@ export class ComposeDocument {
         // For the first step, we have to consider the cursor position within the line
         const currentLine = this.lineAt(params.position);
         const pathParts: string[] = [];
-        let cursorIndentDepth: number;
+        let cursorIndentDepth = 0;
 
         let result: RegExpExecArray | null;
 
@@ -198,7 +198,7 @@ export class ComposeDocument {
                 pathParts.unshift(Item);
             } else if (params.position.character === itemSepPosition) {
                 pathParts.unshift(Sep);
-                pathParts.unshift(Item);
+                pathParts.unshift(Item); // TODO: sometimes we get <item>/<item> because of that indent+1 behavior
             } else if (params.position.character < indentLength) {
                 cursorIndentDepth = params.position.character / tabSize;
             }
@@ -214,7 +214,7 @@ export class ComposeDocument {
                 pathParts.unshift(keyName);
             } else if (params.position.character === keySepPosition) {
                 pathParts.unshift(Sep);
-                pathParts.unshift(keyName);
+                pathParts.unshift(keyName); // TODO: the position is right here for hover, but not completions--if you do complete at the `:` in a key it thinks you're on the value
             } else if (params.position.character > indentLength) {
                 pathParts.unshift(keyName);
             } else if (params.position.character < indentLength) {
@@ -253,9 +253,6 @@ export class ComposeDocument {
             if (params.position.character < indentLength) {
                 cursorIndentDepth = params.position.character / tabSize;
             }
-        } else {
-            // An empty line would match WhitespaceRegex but this last else makes TypeScript happier
-            cursorIndentDepth = 0;
         }
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
 

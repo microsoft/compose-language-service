@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 language: 'dockercompose'
             },
         ],
+        outputChannelName: 'Compose Language Service',
     };
 
     const client = new LanguageClient('compose-language-server', serverOptions, clientOptions, true);
