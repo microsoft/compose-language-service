@@ -6,7 +6,7 @@
 import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
-import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequestType, LF } from '../client/DocumentSettings';
+import { CRLF, DocumentSettings, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ExtendedParams, ExtendedPositionParams, PositionInfo } from './ExtendedParams';
 import { Lazy } from './utils/Lazy';
 
@@ -65,7 +65,7 @@ export class ComposeDocument {
     public async getSettings(params: ExtendedParams): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
         if (!this.documentSettings && params.clientCapabilities.experimental?.documentSettings?.request) {
-            const result = await params.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequestType, { textDocument: this.id });
+            const result = await params.connection.sendRequest(DocumentSettingsRequest.type, { textDocument: this.id });
             if (result) {
                 this.documentSettings = result;
             }
