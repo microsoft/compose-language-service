@@ -6,6 +6,7 @@
 import { Diagnostic, DiagnosticSeverity, TextDocumentChangeEvent } from 'vscode-languageserver';
 import { ComposeDocument } from '../ComposeDocument';
 import { ExtendedParams } from '../ExtendedParams';
+import { als } from '../utils/ActionContext';
 import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
@@ -16,7 +17,8 @@ const DiagnosticDelay = 1000;
 
 export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
-        if (!params.clientCapabilities.textDocument?.publishDiagnostics) {
+        const ctx = als.getStore();
+        if (!ctx || !ctx.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
 
@@ -34,7 +36,7 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
                 );
             }
 
-            params.connection.sendDiagnostics({
+            ctx.connection.sendDiagnostics({
                 uri: params.document.textDocument.uri,
                 diagnostics: diagnostics,
             });

@@ -18,6 +18,7 @@ import {
 }
     from 'vscode-languageserver';
 import { DocumentSettingsNotificationParams, DocumentSettingsNotificationType } from '../client/DocumentSettings';
+import { initEvent } from '../client/TelemetryEvent';
 import { ComposeDocument } from './ComposeDocument';
 import { ExtendedParams, TextDocumentParams } from './ExtendedParams';
 import { MultiCompletionProvider } from './providers/completion/MultiCompletionProvider';
@@ -26,6 +27,7 @@ import { DocumentFormattingProvider } from './providers/DocumentFormattingProvid
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
 import { ProviderBase } from './providers/ProviderBase';
+import { ActionContext, als } from './utils/ActionContext';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
@@ -95,6 +97,12 @@ export class ComposeLanguageService implements Disposable {
         handler: ProviderBase<P & ExtendedParams, R, PR, E>
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
+            const actionContext: ActionContext = {
+                clientCapabilities: this.clientParams.capabilities,
+                connection: this.connection,
+                telemetry: initEvent(handler.on.name),
+            };
+
             try {
                 const doc = this.documentManager.get(params.textDocument.uri);
                 if (!doc) {
@@ -104,13 +112,25 @@ export class ComposeLanguageService implements Disposable {
                 const extendedParams = {
                     ...params,
                     document: doc,
-                    clientCapabilities: this.clientParams.capabilities,
-                    connection: this.connection,
                 };
 
-                return await Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
+                const promiseHandler = Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
+                return await als.run(actionContext, () => promiseHandler);
             } catch (error) {
-                return ComposeLanguageService.flattenError(error);
+                const responseError = ComposeLanguageService.flattenError<E>(error);
+
+                actionContext.telemetry.properties.result = 'Failed';
+                actionContext.telemetry.properties.error = responseError.code.toString();
+                actionContext.telemetry.properties.errorMessage = responseError.message;
+
+                return responseError;
+            } finally {
+                if (actionContext.telemetry.suppressAll ||
+                    (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
+                    // Do nothing
+                } else {
+                    this.connection.telemetry.logEvent(actionContext.telemetry);
+                }
             }
         });
     }
@@ -120,18 +140,36 @@ export class ComposeLanguageService implements Disposable {
         handler: (params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams) => Promise<void> | void
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
+            const actionContext: ActionContext = {
+                clientCapabilities: this.clientParams.capabilities,
+                connection: this.connection,
+                telemetry: initEvent(handler.name),
+            };
+
             try {
                 const extendedParams = {
                     ...params,
                     textDocument: params.document.id,
                     document: params.document,
-                    clientCapabilities: this.clientParams.capabilities,
-                    connection: this.connection,
                 };
 
-                return await Promise.resolve(handler(extendedParams));
+                const promiseHandler = Promise.resolve(handler(extendedParams));
+                return await als.run(actionContext, () => promiseHandler);
             } catch (error) {
-                return ComposeLanguageService.flattenError(error);
+                const responseError = ComposeLanguageService.flattenError(error);
+
+                actionContext.telemetry.properties.result = 'Failed';
+                actionContext.telemetry.properties.error = responseError.code.toString();
+                actionContext.telemetry.properties.errorMessage = responseError.message;
+
+                return responseError;
+            } finally {
+                if (actionContext.telemetry.suppressAll ||
+                    (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
+                    // Do nothing
+                } else {
+                    this.connection.telemetry.logEvent(actionContext.telemetry);
+                }
             }
         }, this, this.subscriptions);
     }

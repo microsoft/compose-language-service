@@ -15,10 +15,6 @@ const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageN
 
 export class ImageLinkProvider extends ProviderBase<DocumentLinkParams & ExtendedParams, DocumentLink[] | undefined, never, never> {
     public on(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): DocumentLink[] | undefined {
-        if (!params.clientCapabilities.textDocument?.documentLink) {
-            return undefined;
-        }
-
         const results: DocumentLink[] = [];
 
         const serviceMap = params.document.yamlDocument.value.getIn(['services']);

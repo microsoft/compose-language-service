@@ -7,16 +7,13 @@ import { CancellationToken, Hover, HoverParams, MarkupKind } from 'vscode-langua
 import { CST } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
 import { ExtendedPosition } from '../ExtendedPosition';
+import { als } from '../utils/ActionContext';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
 export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams, Hover | undefined, never, never> {
     public on(params: HoverParams & ExtendedParams, token: CancellationToken): Hover | undefined {
-        if (!params.clientCapabilities.textDocument?.hover) {
-            return undefined;
-        }
-
-        const contentFormat = params.clientCapabilities.textDocument.hover.contentFormat;
+        const contentFormat = als.getStore()?.clientCapabilities.textDocument?.hover?.contentFormat;
         const preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
 
         const extendedPosition = ExtendedPosition.build(params.document, params.position);

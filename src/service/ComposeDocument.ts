@@ -7,7 +7,8 @@ import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, Tex
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequestType, LF } from '../client/DocumentSettings';
-import { ExtendedParams, ExtendedPositionParams } from './ExtendedParams';
+import { ExtendedPositionParams } from './ExtendedParams';
+import { als } from './utils/ActionContext';
 import { Lazy } from './utils/Lazy';
 
 const EmptyDocumentCST: CST.Document = {
@@ -70,7 +71,7 @@ export class ComposeDocument {
 
         if (matchParts?.groups?.['indentation']) {
             // TODO: should item indicator be counted as one extra indent? YAML allows for item indicators that have the `-` at the same indentation as the parent key
-            return matchParts.groups['indentation'].length / (await this.getSettings(params)).tabSize;
+            return matchParts.groups['indentation'].length / (await this.getSettings()).tabSize;
         }
 
         return 0;
@@ -129,12 +130,16 @@ export class ComposeDocument {
         return '/' + pathParts.join('/');
     }
 
-    public async getSettings(params: ExtendedParams): Promise<DocumentSettings> {
+    public async getSettings(): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
-        if (!this.documentSettings && params.clientCapabilities.experimental?.documentSettings?.request) {
-            const result = await params.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequestType, { textDocument: this.id });
-            if (result) {
-                this.documentSettings = result;
+        if (!this.documentSettings) {
+            const ctx = als.getStore();
+
+            if (ctx?.clientCapabilities?.experimental?.documentSettings?.request) {
+                const result = await ctx.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequestType, { textDocument: this.id });
+                if (result) {
+                    this.documentSettings = result;
+                }
             }
         }
 
