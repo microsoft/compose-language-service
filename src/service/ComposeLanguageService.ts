@@ -97,41 +97,21 @@ export class ComposeLanguageService implements Disposable {
         handler: ProviderBase<P & ExtendedParams, R, PR, E>
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
-            const actionContext: ActionContext = {
-                clientCapabilities: this.clientParams.capabilities,
-                connection: this.connection,
-                telemetry: initEvent(handler.on.name),
-            };
 
-            try {
+            return await this.callWithTelemetryAndErrorHandling(handler.on.name, async () => {
                 const doc = this.documentManager.get(params.textDocument.uri);
                 if (!doc) {
                     throw new ResponseError(ErrorCodes.InvalidParams, 'Document not found in cache.');
                 }
 
-                const extendedParams = {
+                const extendedParams: P & ExtendedParams = {
                     ...params,
                     document: doc,
                 };
 
-                const promiseHandler = Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
-                return await als.run(actionContext, () => promiseHandler);
-            } catch (error) {
-                const responseError = ComposeLanguageService.flattenError<E>(error);
+                return await Promise.resolve(handler.on(extendedParams, token, workDoneProgress, resultProgress));
+            });
 
-                actionContext.telemetry.properties.result = 'Failed';
-                actionContext.telemetry.properties.error = responseError.code.toString();
-                actionContext.telemetry.properties.errorMessage = responseError.message;
-
-                return responseError;
-            } finally {
-                if (actionContext.telemetry.suppressAll ||
-                    (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
-                    // Do nothing
-                } else {
-                    this.connection.telemetry.logEvent(actionContext.telemetry);
-                }
-            }
         });
     }
 
@@ -140,48 +120,60 @@ export class ComposeLanguageService implements Disposable {
         handler: (params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams) => Promise<void> | void
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
-            const actionContext: ActionContext = {
-                clientCapabilities: this.clientParams.capabilities,
-                connection: this.connection,
-                telemetry: initEvent(handler.name),
-            };
 
-            try {
-                const extendedParams = {
+            return await this.callWithTelemetryAndErrorHandling(handler.name, async () => {
+                const extendedParams: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams = {
                     ...params,
                     textDocument: params.document.id,
-                    document: params.document,
                 };
 
-                const promiseHandler = Promise.resolve(handler(extendedParams));
-                return await als.run(actionContext, () => promiseHandler);
-            } catch (error) {
-                const responseError = ComposeLanguageService.flattenError(error);
+                return await Promise.resolve(handler(extendedParams));
+            });
 
-                actionContext.telemetry.properties.result = 'Failed';
-                actionContext.telemetry.properties.error = responseError.code.toString();
-                actionContext.telemetry.properties.errorMessage = responseError.message;
-
-                return responseError;
-            } finally {
-                if (actionContext.telemetry.suppressAll ||
-                    (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
-                    // Do nothing
-                } else {
-                    this.connection.telemetry.logEvent(actionContext.telemetry);
-                }
-            }
         }, this, this.subscriptions);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private static flattenError<E>(error: any): ResponseError<E> {
-        if (error instanceof ResponseError) {
-            return error;
-        } else if (error instanceof Error) {
-            return new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error as unknown as E);
-        }
+    private async callWithTelemetryAndErrorHandling<R, E>(callbackId: string, callback: () => Promise<R>): Promise<R | ResponseError<E>> {
+        const actionContext: ActionContext = {
+            clientCapabilities: this.clientParams.capabilities,
+            connection: this.connection,
+            telemetry: initEvent(callbackId),
+        };
 
-        return new ResponseError(ErrorCodes.InternalError, error.toString());
+        const startTime = process.hrtime.bigint();
+
+        try {
+            // Run it with the given `AsyncLocalContext<ActionContext>`
+            return await als.run(actionContext, callback);
+        } catch (error) {
+            let responseError: ResponseError<E>;
+
+            if (error instanceof ResponseError) {
+                responseError = error;
+            } else if (error instanceof Error) {
+                responseError = new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error as unknown as E);
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                responseError = new ResponseError(ErrorCodes.InternalError, (error as any).toString ? (error as any).toString() : 'Unknown error');
+            }
+
+            actionContext.telemetry.properties.result = 'Failed';
+            actionContext.telemetry.properties.error = responseError.code.toString();
+            actionContext.telemetry.properties.errorMessage = responseError.message;
+
+            return responseError;
+        } finally {
+            const endTime = process.hrtime.bigint();
+            const elapsedSeconds = Number((endTime - startTime) / BigInt(1000 * 1000 * 1000));
+            actionContext.telemetry.measurements.duration = elapsedSeconds;
+
+            if (actionContext.telemetry.suppressAll ||
+                (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
+                // Do nothing
+            } else {
+                // TODO: send through aggregator
+                this.connection.telemetry.logEvent(actionContext.telemetry);
+            }
+        }
     }
 }
