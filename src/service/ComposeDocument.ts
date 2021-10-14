@@ -317,6 +317,9 @@ export class ComposeDocument {
     }
 }
 
+// IMPORTANT: For all of these regular expressions, the groups present *and* their names are very important.
+// Removal or alteration would break `getPositionInfo` and `getFirstLinePositionInfo`
+
 // A regex for matching a standard key/value line, i.e. `key: value`
 // Exported for use by KeyHoverProvider
 export const KeyValueRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
