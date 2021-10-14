@@ -28,10 +28,12 @@ import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
 import { ProviderBase } from './providers/ProviderBase';
 import { ActionContext, als } from './utils/ActionContext';
+import { TelemetryAggregator } from './utils/telemetry/TelemetryAggregator';
 
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
+    private readonly telemetryAggregator: TelemetryAggregator;
 
     // TODO: telemetry! Aggregation!
 
@@ -50,6 +52,9 @@ export class ComposeLanguageService implements Disposable {
 
         // Start the document listener
         this.documentManager.listen(this.connection);
+
+        // Start the telemetry aggregator
+        this.subscriptions.push(this.telemetryAggregator = new TelemetryAggregator(this.connection));
     }
 
     public dispose(): void {
@@ -85,6 +90,7 @@ export class ComposeLanguageService implements Disposable {
     }
 
     private onDidChangeDocumentSettings(params: DocumentSettingsNotificationParams): void {
+        // Telemetrize this?
         const composeDoc = this.documentManager.get(params.textDocument.uri);
 
         if (composeDoc) {
@@ -164,15 +170,14 @@ export class ComposeLanguageService implements Disposable {
             return responseError;
         } finally {
             const endTime = process.hrtime.bigint();
-            const elapsedSeconds = Number((endTime - startTime) / BigInt(1000 * 1000 * 1000));
-            actionContext.telemetry.measurements.duration = elapsedSeconds;
+            const elapsedMilliseconds = Number((endTime - startTime) / BigInt(1000 * 1000));
+            actionContext.telemetry.measurements.duration = elapsedMilliseconds;
 
             if (actionContext.telemetry.suppressAll ||
                 (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
                 // Do nothing
             } else {
-                // TODO: send through aggregator
-                this.connection.telemetry.logEvent(actionContext.telemetry);
+                this.telemetryAggregator.logEvent(actionContext.telemetry);
             }
         }
     }
