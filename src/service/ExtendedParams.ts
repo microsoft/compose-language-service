@@ -3,10 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Position, TextDocumentIdentifier } from 'vscode-languageserver';
+import { CompletionParams, TextDocumentIdentifier, TextDocumentPositionParams } from 'vscode-languageserver';
 import { ComposeDocument } from './ComposeDocument';
-import { ExtendedPosition } from './ExtendedPosition';
-import { Lazy } from './utils/Lazy';
 
 export interface TextDocumentParams {
     textDocument: TextDocumentIdentifier;
@@ -16,11 +14,14 @@ export interface ExtendedParams extends TextDocumentParams {
     document: ComposeDocument;
 }
 
-export interface PositionParams extends TextDocumentParams {
-    position: Position;
+export interface ExtendedPositionParams extends ExtendedParams, TextDocumentPositionParams {
 }
 
-export interface ExtendedPositionParams extends ExtendedParams, PositionParams {
-    extendedPosition: Lazy<ExtendedPosition>;
-    path?: string;
+export interface PositionInfo {
+    path: string;
+    indentDepth: number;
+}
+
+export interface ExtendedCompletionParams extends CompletionParams, ExtendedPositionParams {
+    positionInfo: PositionInfo;
 }

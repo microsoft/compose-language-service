@@ -17,7 +17,7 @@ import {
     TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
-import { DocumentSettingsNotificationParams, DocumentSettingsNotificationType } from '../client/DocumentSettings';
+import { DocumentSettingsNotificationParams, DocumentSettingsNotification } from '../client/DocumentSettings';
 import { initEvent } from '../client/TelemetryEvent';
 import { ComposeDocument } from './ComposeDocument';
 import { ExtendedParams, TextDocumentParams } from './ExtendedParams';
@@ -46,7 +46,7 @@ export class ComposeLanguageService implements Disposable {
         this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
 
         // Hook up one additional notification handler
-        this.connection.onNotification(DocumentSettingsNotificationType, this.onDidChangeDocumentSettings);
+        this.connection.onNotification(DocumentSettingsNotification.type, this.onDidChangeDocumentSettings);
 
         // Start the document listener
         this.documentManager.listen(this.connection);
