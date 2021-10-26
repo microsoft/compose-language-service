@@ -5,6 +5,7 @@
 
 import { Connection, Disposable } from 'vscode-languageserver';
 import { initEvent, TelemetryEvent } from '../../../client/TelemetryEvent';
+import { logNormal } from './logNormal';
 
 // One minute flush interval
 const FlushIntervalMilliseconds = 60 * 1000;
@@ -61,16 +62,15 @@ export class TelemetryAggregator implements Disposable {
                 const events = eventGroups.get(key)!;
                 const aggregatedEvent = initEvent(key);
 
-                aggregatedEvent.measurements.count = events.length;
-
                 // If events somehow don't have a duration we shouldn't count them when it comes to duration avg, stdev, etc.
                 // So, get an array of durations only
-                const durations = events.map(e => e.measurements.duration ?? undefined).filter(d => d !== undefined) as number[];
+                const durations = events.map(e => e.measurements.duration ?? undefined).filter(d => d !== undefined) as number[] || [];
+                const stats = logNormal(durations);
 
-                aggregatedEvent.measurements.durationAvg = 0; // TODO
-                aggregatedEvent.measurements.durationStdev = 0; // TODO
-                aggregatedEvent.measurements.durationMedian = 0; // TODO
-                aggregatedEvent.measurements.duration95th = 0; // TODO
+                aggregatedEvent.measurements.count = events.length;
+                aggregatedEvent.measurements.durationMu = stats.mu;
+                aggregatedEvent.measurements.durationSigma = stats.sigma;
+                aggregatedEvent.measurements.durationMedian = stats.median;
 
                 aggregated.push(aggregatedEvent);
             }
