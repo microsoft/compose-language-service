@@ -173,12 +173,8 @@ export class ComposeLanguageService implements Disposable {
             const elapsedMilliseconds = Number((endTime - startTime) / BigInt(1000 * 1000));
             actionContext.telemetry.measurements.duration = elapsedMilliseconds;
 
-            if (actionContext.telemetry.suppressAll ||
-                (actionContext.telemetry.suppressIfSuccessful && actionContext.telemetry.properties.result === 'Succeeded')) {
-                // Do nothing
-            } else {
-                this.telemetryAggregator.logEvent(actionContext.telemetry);
-            }
+            // The aggregator will internally handle suppressing / etc.
+            this.telemetryAggregator.logEvent(actionContext.telemetry);
         }
     }
 }

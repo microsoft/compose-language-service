@@ -22,6 +22,8 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
             return;
         }
 
+        ctx.telemetry.suppressAll = true; // Diagnostics is async and telemetry won't really work
+
         debounce(DiagnosticDelay, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
             const diagnostics: Diagnostic[] = [];
 

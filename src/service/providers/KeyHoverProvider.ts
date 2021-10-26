@@ -11,6 +11,8 @@ import { ProviderBase } from './ProviderBase';
 
 export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams, Hover | undefined, never, never> {
     public async on(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const ctx = als.getStore()!;
         const contentFormat = als.getStore()?.clientCapabilities.textDocument?.hover?.contentFormat;
         const preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
 
@@ -23,6 +25,8 @@ export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const keyName = match!.groups!['keyName'];
             const keyIndex = line.indexOf(keyName);
+
+            ctx.telemetry.properties.keyMatch = keyInfo.pathRegex.source;
 
             return {
                 contents: {

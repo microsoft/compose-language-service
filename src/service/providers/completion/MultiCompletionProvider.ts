@@ -5,6 +5,7 @@
 
 import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressReporter } from 'vscode-languageserver';
 import { ExtendedCompletionParams, ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
+import { als } from '../../utils/ActionContext';
 import { ProviderBase } from '../ProviderBase';
 import { CompletionCollection } from './CompletionCollection';
 import { RootCompletionCollection } from './RootCompletionCollection';
@@ -30,6 +31,9 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
     }
 
     public override async on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const ctx = als.getStore()!;
+
         const extendedParams: ExtendedCompletionParams = {
             ...params,
             positionInfo: await params.document.getPositionInfo(params),
@@ -45,7 +49,9 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
 
             const subresults = collection.getActiveCompletionItems(extendedParams);
 
-            if (subresults) {
+            if (subresults?.length) {
+                // TODO: this will only show the last completion collection to provide answers
+                ctx.telemetry.properties.completionCollection = collection.name;
                 results.push(...subresults);
             }
         }
