@@ -3,30 +3,38 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ProtocolNotificationType, ProtocolRequestType } from 'vscode-languageserver-protocol';
-import { TextDocumentIdentifier } from 'vscode-languageserver-types';
-
-// TODO: should we get these from @types/vscode instead? It seems there's some type conflict between `Thenable<T>` from @types/vscode and vscode-jsonrpc
-type LF = 1;
-type CRLF = 2;
-export type EndOfLine = LF | CRLF;
-
-export interface DocumentSettings {
-    tabSize: number;
-    eol: EndOfLine;
-}
-
-export interface DocumentSettingsParams {
-    textDocument: TextDocumentIdentifier;
-}
+import { NotificationType, RequestType } from 'vscode-languageserver-protocol';
+import { TextDocumentParams } from '../service/ExtendedParams';
 
 export interface DocumentSettingsClientCapabilities {
     request: boolean;
     notify: boolean;
 }
 
+// TODO: can we get these from @types/vscode instead? It seems there's some type conflict between `Thenable<T>` from @types/vscode and vscode-jsonrpc preventing @types/vscode from working nicely
+export const LF = 1;
+export const CRLF = 2;
+type EndOfLine = typeof LF | typeof CRLF;
+
+export interface DocumentSettings {
+    tabSize: number;
+    eol: EndOfLine;
+}
+
+export type DocumentSettingsParams = TextDocumentParams;
+
+// Use the same syntax as the LSP
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace DocumentSettingsRequest {
+    export const method = '$/textDocument/documentSettings' as const;
+    export const type = new RequestType<DocumentSettingsParams, DocumentSettings | null, never>(method);
+}
+
 export type DocumentSettingsNotificationParams = DocumentSettingsParams & DocumentSettings;
 
-export const DocumentSettingsRequestType = new ProtocolRequestType<DocumentSettingsParams, DocumentSettings, never, never, never>('$/textDocument/documentSettings');
-
-export const DocumentSettingsNotificationType = new ProtocolNotificationType<DocumentSettingsNotificationParams, never>('$/textDocument/documentSettings/didChange');
+// Use the same syntax as the LSP
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace DocumentSettingsNotification {
+    export const method = '$/textDocument/documentSettings/didChange' as const;
+    export const type = new NotificationType<DocumentSettingsNotificationParams>(method);
+}

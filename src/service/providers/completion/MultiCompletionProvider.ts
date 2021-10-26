@@ -4,43 +4,52 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressReporter } from 'vscode-languageserver';
-import { ExtendedParams } from '../../ExtendedParams';
-import { MultiProviderBase } from '../MultiProviderBase';
-import { VolumesCompletionProvider } from './VolumesCompletionProvider';
+import { ExtendedCompletionParams, ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
+import { ProviderBase } from '../ProviderBase';
+import { CompletionCollection } from './CompletionCollection';
+import { RootCompletionCollection } from './RootCompletionCollection';
+import { ServiceCompletionCollection } from './ServiceCompletionCollection';
+import { VolumesCompletionCollection } from './VolumesCompletionCollection';
 
 /**
  * Completions are one of the more involved features so we will split up the code, with this multi-provider calling each of them
  * Most will no-op but the results will all be aggregated upon return
  * Importantly, if any fail, we will throw an error--all other results will be ignored
  */
-export class MultiCompletionProvider extends MultiProviderBase<CompletionParams & ExtendedParams, CompletionItem[], never> {
+export class MultiCompletionProvider extends ProviderBase<CompletionParams & ExtendedParams, CompletionItem[] | undefined, never, never> {
+    private readonly completionCollections: CompletionCollection[];
+
     public constructor() {
         super();
 
-        this.register(new VolumesCompletionProvider());
+        this.completionCollections = [
+            RootCompletionCollection,
+            ServiceCompletionCollection,
+            VolumesCompletionCollection,
+        ];
     }
 
-    public override on(params: CompletionParams & ExtendedParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): CompletionItem[] | undefined {
-        if (!params.clientCapabilities.textDocument?.completion) {
-            return undefined;
-        }
+    public override async on(params: CompletionParams & ExtendedPositionParams, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter): Promise<CompletionItem[] | undefined> {
+        const extendedParams: ExtendedCompletionParams = {
+            ...params,
+            positionInfo: await params.document.getPositionInfo(params),
+        };
 
-        return super.on(params, token, workDoneProgress);
-    }
-
-    protected reduce(subresults: (CompletionItem[] | undefined)[]): CompletionItem[] | undefined {
         const results: CompletionItem[] = [];
 
-        for (const s of subresults) {
-            if (s) {
-                results.push(...s);
+        for (const collection of this.completionCollections) {
+            // Within each loop we'll check for cancellation
+            if (token.isCancellationRequested) {
+                return undefined;
+            }
+
+            const subresults = collection.getActiveCompletionItems(extendedParams);
+
+            if (subresults) {
+                results.push(...subresults);
             }
         }
 
-        if (results.length) {
-            return results;
-        }
-
-        return undefined;
+        return results.length > 0 ? results : undefined;
     }
 }
