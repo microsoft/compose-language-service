@@ -4,8 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 /**
- * Fits a lognormal distribution to the given data and returns the mu, sigma, and median of the data
- * See also: https://en.wikipedia.org/wiki/Log-normal_distribution
+ * Fits a lognormal distribution to the given data and returns the mu, sigma, and median of the data.
+ * Lognormal is a decent approximation of performance (i.e. durations of things).
+ * @see https://en.wikipedia.org/wiki/Log-normal_distribution
  * @param values The list of values to fit a lognormal distribution to
  * @returns The mu (log of median), sigma (stdev), and median, fit with a lognormal distribution
  */
