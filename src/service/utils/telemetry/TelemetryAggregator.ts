@@ -7,7 +7,7 @@ import { Connection, Disposable } from 'vscode-languageserver';
 import { initEvent, TelemetryEvent } from '../../../client/TelemetryEvent';
 import { logNormal } from './logNormal';
 
-// One minute flush interval
+// One minute flush interval by default
 const FlushIntervalMilliseconds = 60 * 1000;
 
 export class TelemetryAggregator implements Disposable {
@@ -15,7 +15,7 @@ export class TelemetryAggregator implements Disposable {
     private readonly timer: NodeJS.Timeout;
 
     public constructor(private readonly connection: Connection, private readonly interval: number = FlushIntervalMilliseconds) {
-        this.timer = setInterval(this.flush, this.interval);
+        this.timer = setInterval(() => this.flush(), this.interval);
     }
 
     public dispose(): void {

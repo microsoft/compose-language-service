@@ -54,7 +54,7 @@ export class ComposeLanguageService implements Disposable {
         this.documentManager.listen(this.connection);
 
         // Start the telemetry aggregator
-        this.subscriptions.push(this.telemetryAggregator = new TelemetryAggregator(this.connection));
+        this.subscriptions.push(this.telemetryAggregator = new TelemetryAggregator(this.connection, clientParams.initializationOptions?.telemetryAggregationInterval));
     }
 
     public dispose(): void {
@@ -90,7 +90,7 @@ export class ComposeLanguageService implements Disposable {
     }
 
     private onDidChangeDocumentSettings(params: DocumentSettingsNotificationParams): void {
-        // Telemetrize this?
+        // TODO: Telemetrize this?
         const composeDoc = this.documentManager.get(params.textDocument.uri);
 
         if (composeDoc) {
@@ -104,7 +104,7 @@ export class ComposeLanguageService implements Disposable {
     ): void {
         event(async (params, token, workDoneProgress, resultProgress) => {
 
-            return await this.callWithTelemetryAndErrorHandling(handler.on.name, async () => {
+            return await this.callWithTelemetryAndErrorHandling(handler.constructor.name, async () => {
                 const doc = this.documentManager.get(params.textDocument.uri);
                 if (!doc) {
                     throw new ResponseError(ErrorCodes.InvalidParams, 'Document not found in cache.');
@@ -170,8 +170,8 @@ export class ComposeLanguageService implements Disposable {
             return responseError;
         } finally {
             const endTime = process.hrtime.bigint();
-            const elapsedMilliseconds = Number((endTime - startTime) / BigInt(1000 * 1000));
-            actionContext.telemetry.measurements.duration = elapsedMilliseconds;
+            const elapsedMicroseconds = Number((endTime - startTime) / BigInt(1000));
+            actionContext.telemetry.measurements.duration = elapsedMicroseconds;
 
             // The aggregator will internally handle suppressing / etc.
             this.telemetryAggregator.logEvent(actionContext.telemetry);
