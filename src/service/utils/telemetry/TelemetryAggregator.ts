@@ -56,14 +56,13 @@ export class TelemetryAggregator implements Disposable {
                 eventGroups.get(key)!.push(evt);
             }
 
-            // Aggregate and add performance statistics
+            // Aggregate properties and add performance statistics
             for (const key of eventGroups.keys()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const events = eventGroups.get(key)!;
                 const aggregatedEvent = initEvent(key);
 
-                // If events somehow don't have a duration we shouldn't count them when it comes to duration avg, stdev, etc.
-                // So, get an array of durations only
+                // Aggregate the performance statistics
                 const durations = events.map(e => e.measurements.duration ?? undefined).filter(d => d !== undefined) as number[] || [];
                 const stats = logNormal(durations);
 
@@ -71,6 +70,9 @@ export class TelemetryAggregator implements Disposable {
                 aggregatedEvent.measurements.durationMu = stats.mu;
                 aggregatedEvent.measurements.durationSigma = stats.sigma;
                 aggregatedEvent.measurements.durationMedian = stats.median;
+
+                // Aggregate the properties--this will apply all properties from all events, with the recent events overriding prior events if there is a conflict
+                events.forEach(e => Object.assign(aggregatedEvent.properties, e.properties));
 
                 aggregated.push(aggregatedEvent);
             }
