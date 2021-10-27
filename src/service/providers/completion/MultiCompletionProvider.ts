@@ -50,10 +50,12 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
             const subresults = collection.getActiveCompletionItems(extendedParams);
 
             if (subresults?.length) {
-                // TODO: this will only show the last completion collection to provide answers
-                ctx.telemetry.properties.completionCollection = collection.name;
+                ctx.telemetry.keys.push(collection.name); // The set of collection(s) that answer will be part of an aggregated event group, *and* attached as a property (below)
                 results.push(...subresults);
             }
+
+            // The set of collection(s) that answer will be attached as a property
+            ctx.telemetry.properties.collectionsWithResults = ctx.telemetry.keys.sort().join(',');
         }
 
         return results.length > 0 ? results : undefined;

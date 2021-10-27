@@ -46,7 +46,7 @@ export class TelemetryAggregator implements Disposable {
 
             // Group events by their name and key properties
             for (const evt of this.eventBuffer) {
-                const key = evt.eventName; // TODO
+                const key = this.getEventKey(evt);
 
                 if (!eventGroups.has(key)) {
                     eventGroups.set(key, []);
@@ -60,7 +60,10 @@ export class TelemetryAggregator implements Disposable {
             for (const key of eventGroups.keys()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const events = eventGroups.get(key)!;
-                const aggregatedEvent = initEvent(key);
+                const eventName = events[0].eventName;
+                const eventKeys = events[0].keys;
+
+                const aggregatedEvent = initEvent(eventName);
 
                 // Aggregate the performance statistics
                 const durations = events.map(e => e.measurements.duration ?? undefined).filter(d => d !== undefined) as number[] || [];
@@ -71,8 +74,18 @@ export class TelemetryAggregator implements Disposable {
                 aggregatedEvent.measurements.durationSigma = stats.sigma;
                 aggregatedEvent.measurements.durationMedian = stats.median;
 
-                // Aggregate the properties--this will apply all properties from all events, with the recent events overriding prior events if there is a conflict
-                events.forEach(e => Object.assign(aggregatedEvent.properties, e.properties));
+                // Aggregate the properties and measurements--this will apply all properties from all events, with the recent events overriding prior events if there is a conflict
+                events.forEach(evt => Object.assign(aggregatedEvent.properties, evt.properties));
+                events.forEach(evt => {
+                    Object.keys(evt.measurements).forEach(k => {
+                        if (k !== 'duration') {
+                            aggregatedEvent.measurements[k] = evt.measurements[k];
+                        }
+                    });
+                });
+
+                // Lastly, attach the event keys as a property
+                aggregatedEvent.properties.eventKey = eventKeys.sort().join(',');
 
                 aggregated.push(aggregatedEvent);
             }
@@ -95,5 +108,10 @@ export class TelemetryAggregator implements Disposable {
             // Finally, clear out the buffer
             this.eventBuffer = [];
         }
+    }
+
+    private getEventKey(event: TelemetryEvent): string {
+        const sorted = event.keys.sort();
+        return `${event.eventName}/${sorted.join(',')}`;
     }
 }

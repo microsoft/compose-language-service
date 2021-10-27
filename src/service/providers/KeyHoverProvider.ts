@@ -26,7 +26,7 @@ export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams,
             const keyName = match!.groups!['keyName'];
             const keyIndex = line.indexOf(keyName);
 
-            ctx.telemetry.properties.keyMatch = keyInfo.pathRegex.source;
+            ctx.telemetry.properties.hoverMatch = keyInfo.pathRegex.source;
 
             return {
                 contents: {

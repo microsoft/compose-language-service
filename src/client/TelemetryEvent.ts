@@ -7,11 +7,35 @@
 // Ideally they would just be used directly but I'm reluctant to add the dependency on vscode-azureextensionui, given how much unrelated stuff it contains...
 
 export interface TelemetryEvent {
+    /**
+     * The event name.
+     */
     eventName: string;
+
+    /**
+     * Properties of the event. Successful events will be aggregated, and each property from each event attached to the ultimate aggregated event.
+     */
     properties: TelemetryProperties;
+
+    /**
+     * Measurements of the event. Successful events will be aggregated, and each measurement from each event attached to the ultimate aggregated event, with special handling of `duration`.
+     */
     measurements: TelemetryMeasurements;
 
+    /**
+     * The key values that, in addition to event name, will be used for event grouping. This is treated as a set, so order does not matter.
+     * At the time of aggregation, the keys will be added in sorted order to a property called `eventKey`.
+     */
+    keys: string[];
+
+    /**
+     * If true, the event will not be sent if it is successful.
+     */
     suppressIfSuccessful?: boolean;
+
+    /**
+     * If true, the event will not be sent.
+     */
     suppressAll?: boolean;
 }
 
@@ -35,5 +59,6 @@ export function initEvent(eventName: string): TelemetryEvent {
             result: 'Succeeded',
         },
         measurements: {},
+        keys: [],
     };
 }
