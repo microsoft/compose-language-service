@@ -173,7 +173,6 @@ export class ComposeDocument {
         const [yamlDocument] = composedTokens;
 
         if (!isDocument(yamlDocument)) {
-            // TODO: empty documents are a normal thing but will not have a YamlDocument, that should be handled differently than erroring
             throw new ResponseError(ErrorCodes.ParseError, 'Malformed YAML document');
         }
 
@@ -243,7 +242,7 @@ export class ComposeDocument {
             } else if (params.position.character === itemSepPosition) {
                 // If we're at the item separator, we're at the item separator (of course)
                 pathParts.unshift(Sep);
-                pathParts.unshift(Item); // TODO: sometimes we get <item>/<item> because of that indent+1 behavior
+                pathParts.unshift(Item);
             } else if (params.position.character < indentLength) {
                 // Otherwise if we're somewhere within the indentation, we're not at a "position" within this line, but we do need to consider the indent depth
                 cursorIndentDepth = params.position.character / tabSize;
@@ -263,7 +262,7 @@ export class ComposeDocument {
             } else if (params.position.character === keySepPosition) {
                 // If the position is at the key separator, we're on the separator
                 pathParts.unshift(Sep);
-                pathParts.unshift(keyName); // TODO: the position is right here for hover, but not completions--if you do complete at the `:` in a key it thinks you're on the value
+                pathParts.unshift(keyName);
             } else if (params.position.character > indentLength) {
                 // If the position is after the indent, we're in the key
                 pathParts.unshift(keyName);

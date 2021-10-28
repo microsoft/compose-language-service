@@ -35,8 +35,6 @@ export class ComposeLanguageService implements Disposable {
     private readonly subscriptions: Disposable[] = [];
     private readonly telemetryAggregator: TelemetryAggregator;
 
-    // TODO: telemetry! Aggregation!
-
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
         this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider().on);
