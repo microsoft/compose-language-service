@@ -43,6 +43,7 @@ interface TelemetryProperties {
     result?: 'Succeeded' | 'Failed' | 'Canceled';
     error?: string;
     errorMessage?: string;
+    stack?: string;
 
     [key: string]: string | undefined;
 }

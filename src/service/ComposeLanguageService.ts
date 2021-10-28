@@ -153,11 +153,14 @@ export class ComposeLanguageService implements Disposable {
             return await als.run(actionContext, callback);
         } catch (error) {
             let responseError: ResponseError<E>;
+            let stack: string | undefined;
 
             if (error instanceof ResponseError) {
                 responseError = error;
+                stack = error.stack;
             } else if (error instanceof Error) {
                 responseError = new ResponseError(ErrorCodes.UnknownErrorCode, error.message, error as unknown as E);
+                stack = error.stack;
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 responseError = new ResponseError(ErrorCodes.InternalError, (error as any).toString ? (error as any).toString() : 'Unknown error');
@@ -166,6 +169,7 @@ export class ComposeLanguageService implements Disposable {
             actionContext.telemetry.properties.result = 'Failed';
             actionContext.telemetry.properties.error = responseError.code.toString();
             actionContext.telemetry.properties.errorMessage = responseError.message;
+            actionContext.telemetry.properties.stack = stack;
 
             return responseError;
         } finally {
