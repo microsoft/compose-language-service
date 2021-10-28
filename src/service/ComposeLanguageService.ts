@@ -48,7 +48,7 @@ export class ComposeLanguageService implements Disposable {
         this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
 
         // Hook up one additional notification handler
-        this.connection.onNotification(DocumentSettingsNotification.type, this.onDidChangeDocumentSettings);
+        this.connection.onNotification(DocumentSettingsNotification.method, (params) => this.onDidChangeDocumentSettings(params));
 
         // Start the document listener
         this.documentManager.listen(this.connection);
