@@ -8,7 +8,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CST, Document as YamlDocument, Parser, Composer, isDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ExtendedPositionParams, PositionInfo } from './ExtendedParams';
-import { als } from './utils/ActionContext';
+import { getCurrentContext } from './utils/ActionContext';
 import { Lazy } from './utils/Lazy';
 
 const EmptyDocumentCST: CST.Document = {
@@ -77,9 +77,9 @@ export class ComposeDocument {
     public async getSettings(): Promise<DocumentSettings> {
         // First, try asking the client, if the capability is present
         if (!this.documentSettings) {
-            const ctx = als.getStore();
+            const ctx = getCurrentContext();
 
-            if (ctx?.clientCapabilities?.experimental?.documentSettings?.request) {
+            if (ctx.clientCapabilities?.experimental?.documentSettings?.request) {
                 const result = await ctx.connection.sendRequest<DocumentSettingsParams, DocumentSettings | null, never>(DocumentSettingsRequest.type, { textDocument: this.id });
                 if (result) {
                     this.documentSettings = result;

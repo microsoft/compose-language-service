@@ -27,7 +27,7 @@ import { DocumentFormattingProvider } from './providers/DocumentFormattingProvid
 import { ImageLinkProvider } from './providers/ImageLinkProvider';
 import { KeyHoverProvider } from './providers/KeyHoverProvider';
 import { ProviderBase } from './providers/ProviderBase';
-import { ActionContext, als } from './utils/ActionContext';
+import { ActionContext, runWithContext } from './utils/ActionContext';
 import { TelemetryAggregator } from './utils/telemetry/TelemetryAggregator';
 
 export class ComposeLanguageService implements Disposable {
@@ -147,8 +147,7 @@ export class ComposeLanguageService implements Disposable {
         const startTime = process.hrtime.bigint();
 
         try {
-            // Run it with the given `AsyncLocalContext<ActionContext>`
-            return await als.run(actionContext, callback);
+            return await runWithContext(actionContext, callback);
         } catch (error) {
             let responseError: ResponseError<E>;
             let stack: string | undefined;

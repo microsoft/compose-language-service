@@ -6,14 +6,13 @@
 import { CancellationToken, Hover, HoverParams, MarkupKind, Position, Range } from 'vscode-languageserver';
 import { KeyValueRegex } from '../ComposeDocument';
 import { ExtendedParams } from '../ExtendedParams';
-import { als } from '../utils/ActionContext';
+import { getCurrentContext } from '../utils/ActionContext';
 import { ProviderBase } from './ProviderBase';
 
 export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams, Hover | undefined, never, never> {
     public async on(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const ctx = als.getStore()!;
-        const contentFormat = als.getStore()?.clientCapabilities.textDocument?.hover?.contentFormat;
+        const ctx = getCurrentContext();
+        const contentFormat = ctx.clientCapabilities.textDocument?.hover?.contentFormat;
         const preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
 
         const positionInfo = await params.document.getPositionInfo(params);

@@ -6,7 +6,7 @@
 import { CancellationToken, DocumentLink, DocumentLinkParams } from 'vscode-languageserver';
 import { isMap, isScalar, Scalar } from 'yaml';
 import { ExtendedParams } from '../ExtendedParams';
-import { als } from '../utils/ActionContext';
+import { getCurrentContext } from '../utils/ActionContext';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
@@ -16,8 +16,7 @@ const mcrImageRegex = /^mcr.microsoft.com\/(?<namespace>([a-z0-9]+\/)+)(?<imageN
 
 export class ImageLinkProvider extends ProviderBase<DocumentLinkParams & ExtendedParams, DocumentLink[] | undefined, never, never> {
     public on(params: DocumentLinkParams & ExtendedParams, token: CancellationToken): DocumentLink[] | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const ctx = als.getStore()!;
+        const ctx = getCurrentContext();
         const results: DocumentLink[] = [];
 
         const serviceMap = params.document.yamlDocument.value.getIn(['services']);

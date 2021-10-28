@@ -4,14 +4,28 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as async from 'async_hooks';
-import { Connection } from 'vscode-languageserver';
+import { Connection, ErrorCodes, ResponseError } from 'vscode-languageserver';
 import { ComposeLanguageClientCapabilities } from '../../client/DocumentSettings';
 import { TelemetryEvent } from '../../client/TelemetryEvent';
 
-export const als = new async.AsyncLocalStorage<ActionContext>();
+const als = new async.AsyncLocalStorage<ActionContext>();
 
 export interface ActionContext {
     clientCapabilities: ComposeLanguageClientCapabilities;
     connection: Connection;
     telemetry: TelemetryEvent;
+}
+
+export function getCurrentContext(): ActionContext {
+    const ctx = als.getStore();
+
+    if (!ctx) {
+        throw new ResponseError(ErrorCodes.InternalError, 'Failed to get action context');
+    }
+
+    return ctx;
+}
+
+export function runWithContext<R>(context: ActionContext, callback: () => R): R {
+    return als.run(context, callback);
 }
