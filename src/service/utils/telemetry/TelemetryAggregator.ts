@@ -98,7 +98,7 @@ export class TelemetryAggregator implements Disposable {
             events.forEach(evt => Object.assign(aggregatedEvent.properties, evt.properties));
             events.forEach(evt => {
                 Object.keys(evt.measurements).forEach(k => {
-                    if (k !== 'duration') {
+                    if (k !== 'duration') { // The `duration` measurement will NOT be attached here, but rather uses the statistical aggregation above
                         aggregatedEvent.measurements[k] = evt.measurements[k];
                     }
                 });
