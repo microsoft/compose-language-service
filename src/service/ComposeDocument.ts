@@ -135,7 +135,9 @@ export class ComposeDocument {
             } else if ((result = KeyValueRegex.exec(currentLine))) {
                 indentDepth = result.groups!['indent'].length / tabSize;
 
-                if (indentDepth < currentIndentDepth) {
+                if (indentDepth < currentIndentDepth ||
+                    (indentDepth === currentIndentDepth && fullPathParts[0] === Item)) // YAML is too permissive and allows for items to have the same indentation as their parent key, so need to account for that
+                {
                     // If this line is a KeyValue (which also includes keys alone) and less indented, add that key to the path
                     currentIndentDepth = indentDepth;
                     fullPathParts.unshift(result.groups!['keyName']);
@@ -222,7 +224,7 @@ export class ComposeDocument {
             const indentLength = result.groups!['indent'].length;
             const keyName = result.groups!['keyName'];
 
-            cursorIndentDepth = indentLength / tabSize + 1; // We will add 1 to the indent depth, because YAML is too permissive and allows item lists at the same indent depth as their parent key
+            cursorIndentDepth = indentLength / tabSize;
 
             if (params.position.character > keySepPosition) {
                 // If the position is after the key separator, we're in the value
@@ -274,7 +276,7 @@ export class ComposeDocument {
             const itemSepPosition = currentLine.indexOf(result.groups!['itemInd']);
             const indentLength = result.groups!['indent'].length;
 
-            cursorIndentDepth = indentLength / tabSize + 1; // We will add 1 to the indent depth, because YAML is too permissive and allows item lists at the same indent depth as their parent key
+            cursorIndentDepth = indentLength / tabSize;
 
             if (params.position.character > itemSepPosition) {
                 // If the position is after the item separator, we're in the value
@@ -329,10 +331,10 @@ export class ComposeDocument {
 export const KeyValueRegex = /^(?<indent> *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
 
 // A regex for matching an item/value line, i.e. `- value`
-const ItemValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<value>.*)$/im;
+const ItemValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) *)(?<value>.*)$/im;
 
 // A regex for matching an item/key/value line, i.e. `- key: value`. This will be the top line of a flow map.
-const ItemKeyValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) +)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
+const ItemKeyValueRegex = /^(?<indent> *)(?<itemInd>(?<itemSep>-) *)(?<key>(?<keyName>[.\w-]+)(?<keyInd>(?<keySep>:)\s+))(?<value>.*)$/im;
 
 // A regex for matching any value line
 const ValueRegex = /^(?<indent> *)(?<value>\S+)$/im;

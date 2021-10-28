@@ -18,7 +18,7 @@ const DiagnosticDelay = 1000;
 export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
         const ctx = als.getStore();
-        if (!ctx || !ctx.clientCapabilities.textDocument?.publishDiagnostics) {
+        if (!ctx?.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
 
