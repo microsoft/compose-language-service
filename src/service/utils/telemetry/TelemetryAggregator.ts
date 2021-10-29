@@ -52,6 +52,7 @@ export class TelemetryAggregator implements Disposable {
             telemetryFailedEvent.properties.result = 'Failed';
             telemetryFailedEvent.properties.error = error.name;
             telemetryFailedEvent.properties.errorMessage = error.message;
+            telemetryFailedEvent.properties.stack = error.stack;
 
             this.connection.telemetry.logEvent(telemetryFailedEvent);
         } finally {
