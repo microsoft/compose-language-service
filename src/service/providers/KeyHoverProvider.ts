@@ -12,6 +12,7 @@ import { ProviderBase } from './ProviderBase';
 export class KeyHoverProvider extends ProviderBase<HoverParams & ExtendedParams, Hover | undefined, never, never> {
     public async on(params: HoverParams & ExtendedParams, token: CancellationToken): Promise<Hover | undefined> {
         const ctx = getCurrentContext();
+        ctx.telemetry.groupingStrategy = 'eventName'; // The below `hoverMatch` property that is attached will be lossy, but that's not serious; at global scales it will still be representative of usage
         const contentFormat = ctx.clientCapabilities.textDocument?.hover?.contentFormat;
         const preferMarkdown = contentFormat?.length ? contentFormat?.[0] === MarkupKind.Markdown : false;
 
