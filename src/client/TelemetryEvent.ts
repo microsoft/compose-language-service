@@ -26,7 +26,7 @@ export interface TelemetryEvent {
      * The key values that, in addition to event name, will be used for event grouping. This is treated as a set, so order does not matter.
      * At the time of aggregation, the keys will be added in sorted order to a property called `eventKey`.
      */
-    keys: string[];
+    groupingKeys: string[];
 
     /**
      * If true, the event will not be sent if it is successful.
@@ -60,6 +60,6 @@ export function initEvent(eventName: string): TelemetryEvent {
             result: 'Succeeded',
         },
         measurements: {},
-        keys: [],
+        groupingKeys: [],
     };
 }

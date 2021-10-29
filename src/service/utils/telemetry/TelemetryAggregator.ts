@@ -81,7 +81,7 @@ export class TelemetryAggregator implements Disposable {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const events = eventGroups.get(key)!;
             const eventName = events[0].eventName;
-            const eventKeys = events[0].keys;
+            const eventKeys = events[0].groupingKeys;
 
             const aggregatedEvent = initEvent(eventName);
 
@@ -114,7 +114,7 @@ export class TelemetryAggregator implements Disposable {
     }
 
     private getEventKey(event: TelemetryEvent): string {
-        const sorted = event.keys.sort();
+        const sorted = event.groupingKeys.sort();
         return `${event.eventName}/${sorted.join(',')}`;
     }
 }
