@@ -43,7 +43,7 @@ export class ImageLinkProvider extends ProviderBase<DocumentLinkParams & Extende
             }
         }
 
-        ctx.telemetry.properties.imageTypes = Array.from(imageTypes.entries()).sort().join(',');
+        ctx.telemetry.properties.imageTypes = Array.from(imageTypes.values()).sort().join(',');
 
         return results;
     }
