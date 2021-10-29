@@ -35,9 +35,9 @@ export function logNormal(values: number[]): { mu: number, sigma: number, median
     }
 
     return {
-        mu,
-        sigma,
-        median: Math.pow(Math.E, mu),
+        mu: round(mu, 3),
+        sigma: round(sigma, 3),
+        median: round(Math.pow(Math.E, mu), 0),
     };
 }
 
@@ -60,4 +60,15 @@ function sq(value: number): number {
  */
 function ln(value: number): number {
     return Math.log(value);
+}
+
+/**
+ * Rounds a number to a given decimal precision
+ * @param value The value to round
+ * @param precision The number of places after the decimal to keep
+ * @returns The rounded number
+ */
+function round(value: number, precision: number = 3): number {
+    const multiplier = Math.pow(10, precision);
+    return Math.round(value * multiplier) / multiplier;
 }
