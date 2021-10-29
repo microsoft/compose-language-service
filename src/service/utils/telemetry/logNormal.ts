@@ -64,9 +64,6 @@ function ln(value: number): number {
 
 /**
  * Rounds a number to a given decimal precision
- * @param value The value to round
- * @param precision The number of places after the decimal to keep
- * @returns The rounded number
  */
 function round(value: number, precision: number = 3): number {
     const multiplier = Math.pow(10, precision);

@@ -87,9 +87,7 @@ export class TelemetryAggregator implements Disposable {
         }
 
         // For each group, aggregate properties and add performance statistics, to get one aggregated event per group
-        for (const key of eventGroups.keys()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const events = eventGroups.get(key)!;
+        for (const events of eventGroups.values()) {
             const eventName = events[0].eventName;
 
             const aggregatedEvent = initEvent(eventName);
