@@ -64,9 +64,18 @@ export class TelemetryAggregator implements Disposable {
         const aggregated: TelemetryEvent[] = [];
         const eventGroups = new Map<string, TelemetryEvent[]>();
 
-        // Group events by their name and key properties
+        // Group events according to their grouping strategy
         for (const evt of this.eventBuffer) {
-            const key = this.getEventKey(evt);
+            let key: string;
+            switch (evt.groupingStrategy) {
+                case 'eventNameAndProperties':
+                    key = evt.eventName + JSON.stringify(evt.properties);
+                    break;
+                case 'eventName':
+                default:
+                    key = evt.eventName;
+                    break;
+            }
 
             if (!eventGroups.has(key)) {
                 eventGroups.set(key, []);
@@ -76,12 +85,11 @@ export class TelemetryAggregator implements Disposable {
             eventGroups.get(key)!.push(evt);
         }
 
-        // For each group, aggregate properties and measurements, and add performance statistics, to get one aggregated event per group
+        // For each group, aggregate properties and add performance statistics, to get one aggregated event per group
         for (const key of eventGroups.keys()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const events = eventGroups.get(key)!;
             const eventName = events[0].eventName;
-            const eventKeys = events[0].groupingKeys;
 
             const aggregatedEvent = initEvent(eventName);
 
@@ -94,27 +102,13 @@ export class TelemetryAggregator implements Disposable {
             aggregatedEvent.measurements.durationSigma = stats.sigma;
             aggregatedEvent.measurements.durationMedian = stats.median;
 
-            // Aggregate the properties and measurements--this will apply all properties from all events, with the recent events overriding prior events if there is a conflict
+            // Aggregate the properties--this will apply all properties from all events, with the recent events overriding prior events if there is a conflict
+            // If the grouping strategy is 'eventNameAndProperties', there will inherently never be conflicts, since their values must be identical
             events.forEach(evt => Object.assign(aggregatedEvent.properties, evt.properties));
-            events.forEach(evt => {
-                Object.keys(evt.measurements).forEach(k => {
-                    if (k !== 'duration') { // The `duration` measurement will NOT be attached here, but rather uses the statistical aggregation above
-                        aggregatedEvent.measurements[k] = evt.measurements[k];
-                    }
-                });
-            });
-
-            // Lastly, attach the event keys as a property
-            aggregatedEvent.properties.eventKey = eventKeys.sort().join(',');
 
             aggregated.push(aggregatedEvent);
         }
 
         return aggregated;
-    }
-
-    private getEventKey(event: TelemetryEvent): string {
-        const sorted = event.groupingKeys.sort();
-        return `${event.eventName}/${sorted.join(',')}`;
     }
 }

@@ -39,6 +39,7 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
         };
 
         const results: CompletionItem[] = [];
+        const respondingCollections: string[] = [];
 
         for (const collection of this.completionCollections) {
             // Within each loop we'll check for cancellation
@@ -49,12 +50,12 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
             const subresults = collection.getActiveCompletionItems(extendedParams);
 
             if (subresults?.length) {
-                ctx.telemetry.groupingKeys.push(collection.name); // The set of collection(s) that answer will be part of an aggregated event group, *and* attached as a property (below)
+                respondingCollections.push(collection.name);
                 results.push(...subresults);
             }
 
-            // The set of collection(s) that answer will be attached as a property
-            ctx.telemetry.properties.collectionsWithResults = ctx.telemetry.groupingKeys.sort().join(',');
+            // The set of collections that answer will be attached as a property
+            ctx.telemetry.properties.respondingCollections = respondingCollections.sort().join(',');
         }
 
         return results.length > 0 ? results : undefined;

@@ -14,19 +14,19 @@ export interface TelemetryEvent {
 
     /**
      * Properties of the event. Successful events will be aggregated, and each property from each event attached to the ultimate aggregated event.
+     * It is recommended in most cases to sort array properties, in order for them to be functionally treated as sets rather than arrays.
      */
     properties: TelemetryProperties;
 
     /**
-     * Measurements of the event. Successful events will be aggregated, and each measurement from each event attached to the ultimate aggregated event, with special handling of `duration`.
+     * Duration measurements for the event
      */
-    measurements: TelemetryMeasurements;
+    measurements: TelemetryMeasurements & AggregateTelemetryMeasurements;
 
     /**
-     * The key values that, in addition to event name, will be used for event grouping. This is treated as a set, so order does not matter.
-     * At the time of aggregation, the keys will be added in sorted order to a property called `eventKey`.
+     * How the events will be grouped, either by name only, or name + JSON.stringify(properties)
      */
-    groupingKeys: string[];
+    groupingStrategy: 'eventName' | 'eventNameAndProperties';
 
     /**
      * If true, the event will not be sent if it is successful.
@@ -50,7 +50,13 @@ interface TelemetryProperties {
 
 interface TelemetryMeasurements {
     duration?: number;
-    [key: string]: number | undefined;
+}
+
+interface AggregateTelemetryMeasurements {
+    count?: number;
+    durationMu?: number;
+    durationSigma?: number;
+    durationMedian?: number;
 }
 
 export function initEvent(eventName: string): TelemetryEvent {
@@ -60,6 +66,6 @@ export function initEvent(eventName: string): TelemetryEvent {
             result: 'Succeeded',
         },
         measurements: {},
-        groupingKeys: [],
+        groupingStrategy: 'eventNameAndProperties',
     };
 }
