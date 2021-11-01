@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { default as Ajv, ValidateFunction } from 'ajv';
-import * as fs from 'fs';
+import { default as Ajv2019, ValidateFunction } from 'ajv/dist/2019';
+import { default as addFormats } from 'ajv-formats';
 import { Diagnostic, DiagnosticSeverity, Range, TextDocumentChangeEvent } from 'vscode-languageserver';
 import { ComposeDocument } from '../ComposeDocument';
 import { ExtendedParams } from '../ExtendedParams';
@@ -22,9 +22,12 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
     public constructor() {
         super();
 
-        const schema = JSON.parse(fs.readFileSync('./resources/compose-spec.json', 'utf-8'));
-        const ajv = new Ajv({ allErrors: true });
-        this.validate = ajv.compile(schema);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const composeSchema = require('../../../resources/compose-spec.json');
+
+        const ajv = new Ajv2019({ allErrors: true, allowUnionTypes: true });
+        addFormats(ajv);
+        this.validate = ajv.compile(composeSchema);
     }
 
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
@@ -73,7 +76,7 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
                 results.push(
                     Diagnostic.create(
                         Range.create(0, 0, 0, 0), // TODO: compute the range? Is that even possible?
-                        error.message ?? 'foo',
+                        error.message ?? error.keyword,
                         DiagnosticSeverity.Error,
                     )
                 );

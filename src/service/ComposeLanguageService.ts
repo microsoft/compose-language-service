@@ -37,7 +37,7 @@ export class ComposeLanguageService implements Disposable {
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
-        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider().on);
+        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, (params) => new DiagnosticProvider().on(params));
 
         // Hook up all the LSP listeners, which do not create Disposables for some reason
         this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider());
@@ -125,7 +125,7 @@ export class ComposeLanguageService implements Disposable {
     ): void {
         event(async (params: TextDocumentChangeEvent<ComposeDocument>) => {
 
-            return await this.callWithTelemetryAndErrorHandling(handler.name, async () => {
+            return await this.callWithTelemetryAndErrorHandling('DocumentManagerHandler', async () => {
                 const extendedParams: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams = {
                     ...params,
                     textDocument: params.document.id,
