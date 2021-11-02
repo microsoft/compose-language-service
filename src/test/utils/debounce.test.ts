@@ -4,9 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 describe('(Unit) debounce', () => {
-    xit('Should filter multiple calls into one');
+    describe('Common scenarios', () => {
+        xit('Should filter multiple calls into one');
 
-    xit('Should call the callback after the debounce delay');
+        xit('Should call the callback after the debounce delay');
 
-    xit('Should debounce separate call IDs separately');
+        xit('Should debounce separate call IDs separately');
+
+        xit('Should debounce the same call ID in separate documents separately');
+    });
 });

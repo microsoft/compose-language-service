@@ -293,7 +293,7 @@ services:
 async function requestImageLinksAndCompare(testConnection: TestConnection, uri: DocumentUri, expected: ExpectedImageLink[]): Promise<void> {
     const result = await testConnection.client.sendRequest(DocumentLinkRequest.type, { textDocument: { uri } }) as DocumentLink[];
 
-    expect(result).to.be.ok;
+    expect(result).to.be.ok; // Should always be OK result even if 0 links
 
     if (expected.length > 0) {
         result.should.not.be.empty;

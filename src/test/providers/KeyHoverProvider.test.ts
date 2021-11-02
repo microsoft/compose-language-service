@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { expect } from 'chai';
-import { DocumentUri, Hover, HoverRequest, MarkupContent, Position, Range } from 'vscode-languageserver';
+import { DocumentUri, Hover, HoverRequest, MarkupContent, Position, Range, ResponseError } from 'vscode-languageserver';
 import { TestConnection } from '../TestConnection';
 
 interface ExpectedHover {
@@ -73,7 +73,7 @@ describe('KeyHoverProvider', () => {
             await requestHoverAndCompare(testConnection, uri, position5, expected5);
         });
 
-        it('Should not provide hovers for unknown keys', async () => {
+        it('Should NOT provide hovers for unknown keys', async () => {
             const testObject = {
                 foo: '123',
                 services: {
@@ -100,9 +100,7 @@ describe('KeyHoverProvider', () => {
             await requestHoverAndCompare(testConnection, uri, position2, expected2);
         });
 
-        xit('Should not provide hovers for nonscalar keys');
-
-        it('Should not provide hovers for values', async () => {
+        it('Should NOT provide hovers for values', async () => {
             const testObject = {
                 version: '123',
                 services: {
@@ -137,7 +135,7 @@ describe('KeyHoverProvider', () => {
             await requestHoverAndCompare(testConnection, uri, position4, expected4);
         });
 
-        it('Should not provide hovers for separators', async () => {
+        it('Should NOT provide hovers for separators', async () => {
             const testObject = {
                 version: '123',
                 services: {
@@ -164,7 +162,7 @@ describe('KeyHoverProvider', () => {
             await requestHoverAndCompare(testConnection, uri, position2, expected2);
         });
 
-        it('Should not provide hovers for comments', async () => {
+        it('Should NOT provide hovers for comments', async () => {
             const testObject = `version: '123'
 # Hello world!
 services:
@@ -187,7 +185,7 @@ services:
             await requestHoverAndCompare(testConnection, uri, position3, expected3);
         });
 
-        it('Should not provide hovers for whitespace', async () => {
+        it('Should NOT provide hovers for whitespace', async () => {
             const testObject = {
                 version: '123',
                 services: {
@@ -219,6 +217,16 @@ services:
         });
     });
 
+    describe('Error scenarios', () => {
+        it('Should return an error for nonexistent files', () => {
+            return testConnection
+                .client.sendRequest(HoverRequest.type, { textDocument: { uri: 'file:///bogus' }, position: Position.create(0, 0) })
+                .should.eventually.be.rejectedWith(ResponseError);
+        });
+
+        xit('Should NOT provide hovers for nonscalar keys');
+    });
+
     after('Cleanup', () => {
         testConnection.dispose();
     });
@@ -228,12 +236,10 @@ async function requestHoverAndCompare(testConnection: TestConnection, uri: Docum
     const result = await testConnection.client.sendRequest(HoverRequest.type, { textDocument: { uri }, position: position }) as Hover | undefined;
 
     if (expected === undefined) {
-        expect(result).to.be.null; // vscode-jsonrpc turns undefined into null
+        expect(result).to.not.be.ok;
     } else {
-        expect(result).to.not.be.null;
-        expect(result).to.not.be.undefined;
-        expect(result?.range).to.not.be.null;
-        expect(result?.range).to.not.be.undefined;
+        expect(result).to.be.ok;
+        expect(result?.range).to.be.ok;
 
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         result!.range!.should.deep.equal(expected.range);

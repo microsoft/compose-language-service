@@ -9,23 +9,27 @@ import { initEvent } from '../../client/TelemetryEvent';
 import { ActionContext, getCurrentContext, runWithContext } from '../../service/utils/ActionContext';
 
 describe('(Unit) ActionContext', () => {
-    it('Should provide a context when called correctly', async () => {
-        const ctx = {
-            telemetry: initEvent('foo'),
-        } as ActionContext;
+    describe('Common scenarios', () => {
+        it('Should provide a context when called correctly', async () => {
+            const ctx = {
+                telemetry: initEvent('foo'),
+            } as ActionContext;
 
-        await runWithContext(ctx, async () => {
-            const localCtx = getCurrentContext();
+            await runWithContext(ctx, async () => {
+                const localCtx = getCurrentContext();
 
-            ctx.should.equal(localCtx);
-            ctx.should.deep.equal(localCtx);
+                ctx.should.equal(localCtx);
+                ctx.should.deep.equal(localCtx);
 
-            ctx.telemetry.properties.test = '1';
-            localCtx.telemetry.properties.test?.should.equal('1');
+                ctx.telemetry.properties.test = '1';
+                localCtx.telemetry.properties.test?.should.equal('1');
+            });
         });
     });
 
-    it('Should throw a ResponseError if called incorrectly', async () => {
-        expect(getCurrentContext).to.throw(ResponseError);
+    describe('Error scenarios', () => {
+        it('Should throw a ResponseError if called incorrectly', async () => {
+            expect(getCurrentContext).to.throw(ResponseError);
+        });
     });
 });
