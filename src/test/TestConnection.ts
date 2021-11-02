@@ -49,10 +49,14 @@ export class TestConnection implements Disposable {
 
     public sendObjectAsYamlDocument(object: unknown): DocumentUri {
         const yamlInput = new Document(object);
+        return this.sendTextAsYamlDocument(yamlInput.toString());
+    }
+
+    public sendTextAsYamlDocument(text: string): DocumentUri {
         const uri = `file:///a${this.counter++}`;
 
         const openParams: DidOpenTextDocumentParams = {
-            textDocument: TextDocumentItem.create(uri, 'dockercompose', 1, yamlInput.toString()),
+            textDocument: TextDocumentItem.create(uri, 'dockercompose', 1, text),
         };
 
         this.client.sendNotification(DidOpenTextDocumentNotification.type, openParams);
