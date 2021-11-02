@@ -18,7 +18,7 @@ describe('ImageLinkProvider', () => {
         testConnection = new TestConnection();
     });
 
-    describe('Common scenarios', async () => {
+    describe('Common scenarios', () => {
         it('Should provide links for general Docker Hub images', async () => {
             const testObject = {
                 version: '123',
@@ -197,7 +197,7 @@ services:
         });
     });
 
-    describe('Error scenarios', async () => {
+    describe('Error scenarios', () => {
         it('Should return an error for nonexistent files', () => {
             return testConnection
                 .client.sendRequest(DocumentLinkRequest.type, { textDocument: { uri: 'file:///bogus' } })
