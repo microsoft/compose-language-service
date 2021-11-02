@@ -224,7 +224,21 @@ services:
                 .should.eventually.be.rejectedWith(ResponseError);
         });
 
-        xit('Should NOT provide hovers for nonscalar keys');
+        it('Should NOT provide hovers for nonscalar keys', async () => {
+            const testObject = `version: '123'
+? [services, foo]
+:
+  abcd:
+    image: foo
+    build: .`;
+
+            const uri = testConnection.sendTextAsYamlDocument(testObject);
+
+            const position1 = Position.create(1, 6); // Inside key `[services, foo]`
+            const expected1 = undefined;
+
+            await requestHoverAndCompare(testConnection, uri, position1, expected1);
+        });
     });
 
     after('Cleanup', () => {
