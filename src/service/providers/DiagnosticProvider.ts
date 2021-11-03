@@ -11,11 +11,14 @@ import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
-// The time between when typing stops and when diagnostics will be sent (milliseconds)
-
+// The default time between when typing stops and when diagnostics will be sent (milliseconds)
 const DiagnosticDelay = 1000;
 
 export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
+    public constructor(private readonly diagnosticDelay: number = DiagnosticDelay) {
+        super();
+    }
+
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
         const ctx = getCurrentContext();
         if (!ctx.clientCapabilities.textDocument?.publishDiagnostics) {
@@ -24,7 +27,7 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
 
         ctx.telemetry.suppressAll = true; // Diagnostics is async and telemetry won't really work
 
-        debounce(DiagnosticDelay, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
+        debounce(this.diagnosticDelay, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
             const diagnostics: Diagnostic[] = [];
 
             for (const error of [...params.document.yamlDocument.value.errors, ...params.document.yamlDocument.value.warnings]) {
