@@ -5,9 +5,8 @@
 
 import { debounce } from '../../service/utils/debounce';
 
-// This delay is used as the delay given to `debounce`, but also assertions are made that each test should take at least (delay - 1) milliseconds and at most 2 * delay milliseconds
-// This could result in some test fragility; if so a longer delay should reduce the frequency of that
-const delay = 20;
+// This delay is used as the delay given to `debounce`, but also assertions are made that each test should take at least (delay - 1) milliseconds (minus 1 is for sanity against rounding)
+const delay = 10;
 
 describe('(Unit) debounce', () => {
     describe('Common scenarios', () => {
@@ -31,7 +30,7 @@ describe('(Unit) debounce', () => {
             const elapsedMs = Number((stop - start) / BigInt(1000 * 1000));
 
             x.should.equal(1); // x should only have been incremented once
-            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
+            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay - 1> ms to get to this point
         });
 
         it('Should debounce separate call IDs in the same document separately', async () => {
@@ -58,7 +57,7 @@ describe('(Unit) debounce', () => {
             const elapsedMs = Number((stop - start) / BigInt(1000 * 1000));
 
             x.should.equal(2); // x should have been incremented twice
-            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
+            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay - 1> ms to get to this point
         });
 
         it('Should debounce the same call ID in separate documents separately', async () => {
@@ -85,7 +84,7 @@ describe('(Unit) debounce', () => {
             const elapsedMs = Number((stop - start) / BigInt(1000 * 1000));
 
             x.should.equal(2); // x should have been incremented twice
-            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
+            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay - 1> ms to get to this point
         });
 
         it('Should pass along the thisArg', async () => {
@@ -107,7 +106,7 @@ describe('(Unit) debounce', () => {
             const stop = process.hrtime.bigint();
             const elapsedMs = Number((stop - start) / BigInt(1000 * 1000));
 
-            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
+            elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay - 1> ms to get to this point
         });
     });
 });
