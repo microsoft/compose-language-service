@@ -114,43 +114,47 @@ services:
 });
 
 async function awaitDiagnosticsAndCompare(testConnection: TestConnection, testObject: string | unknown, expected: ExpectedDiagnostic[] | undefined): Promise<void> {
-    // Need to connect the listener *before* sending the document, to ensure no timing issues, i.e. with the response being sent before the listener is ready
-    const listenerPromise = new Promise<PublishDiagnosticsParams>((resolve) => {
-        testConnection.client.onNotification(PublishDiagnosticsNotification.type, (diagnosticParams) => {
-            resolve(diagnosticParams);
-        });
-    });
-
-    // Now that the listener is connected, send the document
-    let uri: DocumentUri;
-    if (typeof (testObject) === 'string') {
-        uri = testConnection.sendTextAsYamlDocument(testObject);
-    } else {
-        uri = testConnection.sendObjectAsYamlDocument(testObject);
-    }
-
-    // A promise that will reject if it times out (if the diagnostics never get sent)
     let timeout: NodeJS.Timeout | undefined = undefined;
-    const failurePromise = new Promise<never>((resolve, reject) => {
-        timeout = setTimeout(() => reject('timed out awaiting diagnostic response'), DiagnosticDelay * 10); // This carries some risk of test fragility but we have to draw a line somewhere
-    });
 
-    // Now await the listener's completion promise to get the result
-    const result = await Promise.race<PublishDiagnosticsParams>([listenerPromise, failurePromise]);
-    if (timeout) {
-        clearTimeout(timeout);
-    }
+    try {
+        // Need to connect the listener *before* sending the document, to ensure no timing issues, i.e. with the response being sent before the listener is ready
+        const listenerPromise = new Promise<PublishDiagnosticsParams>((resolve) => {
+            testConnection.client.onNotification(PublishDiagnosticsNotification.type, (diagnosticParams) => {
+                resolve(diagnosticParams);
+            });
+        });
 
-    expect(result).to.be.ok;
-    result.uri.should.equal(uri);
+        // Now that the listener is connected, send the document
+        let uri: DocumentUri;
+        if (typeof (testObject) === 'string') {
+            uri = testConnection.sendTextAsYamlDocument(testObject);
+        } else {
+            uri = testConnection.sendObjectAsYamlDocument(testObject);
+        }
 
-    expect(result.diagnostics).to.be.ok;
-    result.diagnostics.length.should.equal((expected ?? []).length);
+        // A promise that will reject if it times out (if the diagnostics never get sent)
+        const failurePromise = new Promise<never>((resolve, reject) => {
+            timeout = setTimeout(() => reject('timed out awaiting diagnostic response'), DiagnosticDelay * 10); // This carries some risk of test fragility but we have to draw a line somewhere (*sigh* halting problem)
+        });
 
-    if (expected?.length) {
-        // Each diagnostic should have a matching range and content canary in the results
-        for (const expectedDiagnostic of expected) {
-            result.diagnostics.some(actualDiagnostic => diagnosticsMatch(actualDiagnostic, expectedDiagnostic)).should.be.true;
+        // Now await the listener's completion promise to get the result
+        const result = await Promise.race<PublishDiagnosticsParams>([listenerPromise, failurePromise]);
+
+        expect(result).to.be.ok;
+        result.uri.should.equal(uri);
+
+        expect(result.diagnostics).to.be.ok;
+        result.diagnostics.length.should.equal((expected ?? []).length);
+
+        if (expected?.length) {
+            // Each diagnostic should have a matching range and content canary in the results
+            for (const expectedDiagnostic of expected) {
+                result.diagnostics.some(actualDiagnostic => diagnosticsMatch(actualDiagnostic, expectedDiagnostic)).should.be.true;
+            }
+        }
+    } finally {
+        if (timeout) {
+            clearTimeout(timeout);
         }
     }
 }
