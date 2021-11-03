@@ -18,6 +18,7 @@ describe('(Unit) debounce', () => {
             await new Promise<void>((resolve) => {
                 debounce(delay, { callId: 'debounce', uri: 'file:///foo', }, () => {
                     x++;
+                    chai.assert.fail('Should not be executing this debounce call');
                 });
 
                 debounce(delay, { callId: 'debounce', uri: 'file:///foo', }, () => {
@@ -31,7 +32,6 @@ describe('(Unit) debounce', () => {
 
             x.should.equal(1); // x should only have been incremented once
             elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
-            elapsedMs.should.be.lessThan(delay * 2); // But not 2x <delay> ms
         });
 
         it('Should debounce separate call IDs in the same document separately', async () => {
@@ -59,7 +59,6 @@ describe('(Unit) debounce', () => {
 
             x.should.equal(2); // x should have been incremented twice
             elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
-            elapsedMs.should.be.lessThan(delay * 2); // But not 2x <delay> ms
         });
 
         it('Should debounce the same call ID in separate documents separately', async () => {
@@ -87,7 +86,6 @@ describe('(Unit) debounce', () => {
 
             x.should.equal(2); // x should have been incremented twice
             elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
-            elapsedMs.should.be.lessThan(delay * 2); // But not 2x <delay> ms
         });
 
         it('Should pass along the thisArg', async () => {
@@ -110,7 +108,6 @@ describe('(Unit) debounce', () => {
             const elapsedMs = Number((stop - start) / BigInt(1000 * 1000));
 
             elapsedMs.should.be.greaterThanOrEqual(delay - 1); // It should take at least <delay> ms to get to this point (minus 1 for sanity against rounding)
-            elapsedMs.should.be.lessThan(delay * 2); // But not 2x <delay> ms
         });
     });
 });
