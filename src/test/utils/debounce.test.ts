@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as chai from 'chai';
 import { debounce } from '../../service/utils/debounce';
 
 // This delay is used as the delay given to `debounce`, but also assertions are made that each test should take at least (delay - 1) milliseconds (minus 1 is for sanity against rounding)
