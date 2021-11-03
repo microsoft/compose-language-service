@@ -21,11 +21,13 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
 
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
         const ctx = getCurrentContext();
+
+        ctx.telemetry.suppressAll = true; // Diagnostics is async and telemetry won't really work
+        ctx.telemetry.properties.isActivationEvent = 'true'; // In case we do someday enable it, let's make sure it's treated as an activation event since it is done automatically
+
         if (!ctx.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
-
-        ctx.telemetry.suppressAll = true; // Diagnostics is async and telemetry won't really work
 
         debounce(this.diagnosticDelay, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
             const diagnostics: Diagnostic[] = [];
