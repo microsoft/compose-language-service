@@ -13,13 +13,12 @@ import { debounce } from '../utils/debounce';
 import { yamlRangeToLspRange } from '../utils/yamlRangeToLspRange';
 import { ProviderBase } from './ProviderBase';
 
-// The time between when typing stops and when diagnostics will be sent (milliseconds)
-
+// The default time between when typing stops and when diagnostics will be sent (milliseconds)
 const DiagnosticDelay = 1000;
 
 export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<ComposeDocument> & ExtendedParams, void, never, never> {
     private readonly validate: ValidateFunction;
-    public constructor() {
+    public constructor(private readonly diagnosticDelay: number = DiagnosticDelay) {
         super();
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -32,6 +31,10 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
 
     public on(params: TextDocumentChangeEvent<ComposeDocument> & ExtendedParams): void {
         const ctx = getCurrentContext();
+
+        ctx.telemetry.suppressAll = true; // Diagnostics is async and telemetry won't really work
+        ctx.telemetry.properties.isActivationEvent = 'true'; // In case we do someday enable it, let's make sure it's treated as an activation event since it is done automatically
+
         if (!ctx.clientCapabilities.textDocument?.publishDiagnostics) {
             return;
         }
@@ -40,7 +43,6 @@ export class DiagnosticProvider extends ProviderBase<TextDocumentChangeEvent<Com
 
         debounce(DiagnosticDelay, { uri: params.document.textDocument.uri, callId: 'diagnostics' }, () => {
             const diagnostics: Diagnostic[] = this.getDiagnostics(params);
-
             ctx.connection.sendDiagnostics({
                 uri: params.document.textDocument.uri,
                 diagnostics: diagnostics,
