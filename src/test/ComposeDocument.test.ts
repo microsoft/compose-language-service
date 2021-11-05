@@ -55,6 +55,8 @@ describe('ComposeDocument', () => {
             ...{ capabilities: DocumentSettingsClientCapabilities },
         };
         testConnection = new TestConnection(initParams);
+
+        // Set up a client listener to respond to doc settings requests
         testConnection.client.onRequest(DocumentSettingsRequest.method, (params) => {
             return {
                 eol: LF,
@@ -64,6 +66,7 @@ describe('ComposeDocument', () => {
 
         sharedComposeDocument = await sendAndAwaitDocument(testConnection, sharedTestDoc);
 
+        // Set up another connection that will lack the doc settings capabilities
         noDocSettingsConnection = new TestConnection();
         noDocSettingsSharedComposeDocument = await sendAndAwaitDocument(noDocSettingsConnection, sharedTestDoc);
     });
