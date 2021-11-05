@@ -3,36 +3,255 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-describe('(Unit) ComposeDocument', () => {
+import { expect } from 'chai';
+import { InitializeParams, Position, TextDocuments } from 'vscode-languageserver';
+import { ComposeLanguageClientCapabilities, DocumentSettings, DocumentSettingsNotification, DocumentSettingsNotificationParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
+import { ComposeDocument } from '../service/ComposeDocument';
+import { runWithContext } from '../service/utils/ActionContext';
+import { DefaultInitializeParams, TestConnection } from './TestConnection';
+
+const DocumentSettingsClientCapabilities: ComposeLanguageClientCapabilities = {
+    experimental: {
+        documentSettings: {
+            notify: true,
+            request: true,
+        },
+    },
+};
+
+// Almost all of the tests can be performed with a single test document
+const sharedTestDoc: string = `version: '3.4'
+
+# This line is a comment
+
+services:
+    foo:
+        image: bar
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - target: 80
+              published: 8080
+              protocol: tcp
+              mode: host
+            - "5000"
+        profiles: ["service", "db"]
+        volumes: # With a bonus comment
+            - "foo:/bar:ro"
+`;
+
+describe('ComposeDocument', () => {
+    let testConnection: TestConnection;
+    let sharedComposeDocument: ComposeDocument;
+
+    let noDocSettingsConnection: TestConnection;
+    let noDocSettingsSharedComposeDocument: ComposeDocument;
+
+    before('Prepare a language server for testing (with added document settings capability)', async () => {
+        const initParams: InitializeParams = {
+            ...DefaultInitializeParams,
+            ...{ capabilities: DocumentSettingsClientCapabilities },
+        };
+        testConnection = new TestConnection(initParams);
+        testConnection.client.onRequest(DocumentSettingsRequest.method, (params) => {
+            return {
+                eol: LF,
+                tabSize: 4,
+            };
+        });
+
+        sharedComposeDocument = await sendAndAwaitDocument(testConnection, sharedTestDoc);
+
+        noDocSettingsConnection = new TestConnection();
+        noDocSettingsSharedComposeDocument = await sendAndAwaitDocument(noDocSettingsConnection, sharedTestDoc);
+    });
+
     describe('Common scenarios', () => {
-        xit('Should have tests');
+        describe('Position / path scenarios', () => {
+            xit('Position info should be correct for keys at root');
 
-        xit('Position info should be correct for keys at root');
+            xit('Position info should be correct for keys at not-root');
 
-        xit('Position info should be correct for keys at not-root');
+            xit('Position info should be correct for separator after keys');
 
-        xit('Position info should be correct for separator after keys');
+            xit('Position info should be correct for scalar values of keys');
 
-        xit('Position info should be correct for scalar values of keys');
+            xit('Position info should be correct for collection values');
 
-        xit('Position info should be correct for collection values of keys');
+            xit('Position info should be correct for collection values that are flow maps');
 
-        xit('Position info should be correct for collection values that are flow maps');
+            xit('Position info should be correct for separator in collection values');
 
-        xit('Position info should be correct for whitespace-only lines');
+            xit('Position info should be correct for values that are flow sequences');
 
-        xit('Should give lines correctly');
+            xit('Position info should be correct for whitespace-only lines');
 
-        xit('Should guess document settings correctly if the client doesn\'t support DocumentSettings');
+            xit('Position info should be correct for comments');
 
-        xit('Should ask client for document settings if the client does support DocumentSettings');
+            xit('Position info should be correct for lines with comments, but position is before the comment');
+        });
+
+        describe('Basic scenarios', () => {
+            it('Should have a parsed YAML document that is computed on-demand', () => {
+                sharedComposeDocument.yamlDocument.hasValue().should.be.false;
+                sharedComposeDocument.yamlDocument.value.should.be.ok;
+                sharedComposeDocument.yamlDocument.hasValue().should.be.true;
+            });
+
+            it('Should give lines correctly for numeric inputs', () => {
+                sharedComposeDocument.lineAt(0).should.equal('version: \'3.4\'\n');
+                sharedComposeDocument.lineAt(1).should.equal('\n');
+                sharedComposeDocument.lineAt(2).should.equal('# This line is a comment\n');
+                sharedComposeDocument.lineAt(17).should.equal('        volumes: # With a bonus comment\n');
+            });
+
+            it('Should give lines correctly for position inputs', () => {
+                sharedComposeDocument.lineAt(Position.create(0, 0)).should.equal('version: \'3.4\'\n');
+                sharedComposeDocument.lineAt(Position.create(1, 111)).should.equal('\n'); // 111 should round backward to the end of this line
+                sharedComposeDocument.lineAt(Position.create(2, 4)).should.equal('# This line is a comment\n');
+                sharedComposeDocument.lineAt(Position.create(17, 0)).should.equal('        volumes: # With a bonus comment\n');
+            });
+        });
+
+        describe('DocumentSettings scenarios', () => {
+            it('Should guess document settings correctly if the client doesn\'t support DocumentSettings', async () => {
+                // Clear out the settings first, to force the ComposeDocument to recompute it
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (noDocSettingsSharedComposeDocument as any).documentSettings = undefined;
+
+                const settings = await runWithContext(noDocSettingsConnection.getMockContext(), async () => {
+                    return noDocSettingsSharedComposeDocument.getSettings();
+                });
+
+                settings.eol.should.equal(LF);
+                settings.tabSize.should.equal(4);
+            });
+
+            it('Should guess document settings, even for empty docs', async () => {
+                const emptyDoc = await sendAndAwaitDocument(noDocSettingsConnection, '');
+
+                const settings = await runWithContext(noDocSettingsConnection.getMockContext(), async () => {
+                    return emptyDoc.getSettings();
+                });
+
+                settings.eol.should.equal(LF);
+                settings.tabSize.should.equal(2); // The default is 2 spaces
+            });
+
+            it('Should ask client for document settings if the client does support DocumentSettings', async () => {
+                // Clear out the settings first, to force the ComposeDocument to recompute it
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (sharedComposeDocument as any).documentSettings = undefined;
+
+                const requestPromise = new Promise<void>((resolve, reject) => {
+                    testConnection.client.onRequest(DocumentSettingsRequest.method, (params) => {
+                        resolve();
+                        return {
+                            eol: LF,
+                            tabSize: 4,
+                        };
+                    });
+
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (sharedComposeDocument as any).guessDocumentSettings = function () {
+                        reject('Should not be guessing settings if the client can answer');
+                    };
+                });
+
+                const ctx = testConnection.getMockContext();
+
+                const resultPromise = runWithContext(ctx, async () => {
+                    return sharedComposeDocument.getSettings();
+                });
+
+                await Promise.all([requestPromise, resultPromise]);
+                const settings = await resultPromise;
+
+                settings.eol.should.equal(LF);
+                settings.tabSize.should.equal(4);
+            });
+
+            it('Should accept DocumentSettingsNotifications', async () => {
+                const params: DocumentSettingsNotificationParams = {
+                    textDocument: sharedComposeDocument.id,
+                    eol: LF,
+                    tabSize: 3,
+                };
+
+                testConnection.client.sendNotification(DocumentSettingsNotification.type, params);
+
+                // Wait for the service to process the notification
+                await new Promise<void>((resolve) => {
+                    // Override the updateSettings function on the document in order to be able to wait for it to be called
+                    // It's amazing what JavaScript lets you do
+                    const oldUpdateSettings = sharedComposeDocument.updateSettings.bind(sharedComposeDocument);
+                    sharedComposeDocument.updateSettings = function (settings) {
+                        oldUpdateSettings(settings);
+                        resolve();
+                    };
+                });
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const settings = (sharedComposeDocument as any).documentSettings as DocumentSettings;
+                settings.eol.should.equal(LF);
+                settings.tabSize.should.equal(3);
+            });
+        });
     });
 
     describe('Error scenarios', () => {
-        xit('Should NOT throw for an empty document');
+        it('Should NOT throw for an empty document', () => {
+            testConnection.sendTextAsYamlDocument('');
+        });
 
-        xit('Should NOT throw for an invalid document');
+        it('Should NOT throw for a syntactically-incorrect document', () => {
+            const malformedTestObject = `[bar : foo`;
+            testConnection.sendTextAsYamlDocument(malformedTestObject);
+        });
 
-        xit('Should NOT throw for a compound document');
+        it('Should NOT throw for a compound document', () => {
+            const compoundDocument = `---
+services:
+  foo:
+    image: redis
+
+---
+services:
+  bar:
+    image: alpine`;
+            testConnection.sendTextAsYamlDocument(compoundDocument);
+        });
+
+        it('Should throw for lines out of bounds', () => {
+            expect(() => sharedComposeDocument.lineAt(1000)).to.throw('out of bounds');
+            expect(() => sharedComposeDocument.lineAt(Position.create(1000, 0))).to.throw('out of bounds');
+        });
+    });
+
+    after('Cleanup', () => {
+        testConnection.dispose();
+        noDocSettingsConnection.dispose();
     });
 });
+
+async function sendAndAwaitDocument(testConnection: TestConnection, document: string): Promise<ComposeDocument> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const testConnectionDocManager = (testConnection.languageService as any).documentManager as TextDocuments<ComposeDocument>;
+
+    // Set up a listener so we can wait for the service to get the document
+    const waitListener = new Promise<void>((resolve) => {
+        const disposable = testConnectionDocManager.onDidChangeContent(() => {
+            disposable.dispose();
+            resolve();
+        });
+    });
+
+    // Send the doc and wait for the service to get it
+    const uri = testConnection.sendTextAsYamlDocument(document);
+    await waitListener;
+
+    // Grab the doc
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return testConnectionDocManager.get(uri)!;
+}
