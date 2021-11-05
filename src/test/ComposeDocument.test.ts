@@ -542,12 +542,62 @@ describe('ComposeDocument', () => {
                 await getPathAndCompare(
                     testConnection,
                     sharedComposeDocument,
-                    Position.create(17, 17), // The comment after `volumes:`
+                    Position.create(17, 18), // The comment after `volumes:`
                     commentPosition
                 );
             });
 
-            xit('Position info should be correct for lines with comments, but position is before the comment');
+            it('Position info should be correct for lines with comments, but position is before the comment', async () => {
+                const volumesKeyPosition: PositionInfo = {
+                    indentDepth: 2,
+                    path: '/services/foo/volumes',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 8), // The beginning of `volumes:`
+                    volumesKeyPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 11), // The middle of `volumes:`
+                    volumesKeyPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 14), // The end of `volumes:`
+                    volumesKeyPosition
+                );
+
+                const volumesKeySepPosition: PositionInfo = {
+                    indentDepth: 2,
+                    path: '/services/foo/volumes/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 15), // The separator after `volumes:`
+                    volumesKeySepPosition
+                );
+
+                const volumesValuePosition: PositionInfo = {
+                    indentDepth: 2,
+                    path: '/services/foo/volumes/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 16), // The space ahead of the comment after `volumes:`
+                    volumesValuePosition
+                );
+            });
         });
 
         describe('Basic scenarios', () => {
