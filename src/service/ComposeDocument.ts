@@ -355,7 +355,9 @@ const ValueRegex = /^(?<indent> *)(?<value>\S+)$/im;
 const WhitespaceRegex = /^(?<indent> *)$/im;
 
 // A regex for matching any line with a comment (or if the whole line is a comment)
-const LineWithCommentRegex = /^.*(?<commentSep>#).*$/im; // TODO: This will match a 'string with a #', which is *not* a comment, but currently this will not affect any end scenarios
+// TODO: This will match a 'string with a #', which is *not* a comment, but currently this will not affect any end scenarios
+// TODO: The closest I've gotten is /(['"]).*(?<commentSep>#)(?:(?!\1).)*$/im
+const LineWithCommentRegex = /^.*(?<commentSep>#).*$/im;
 
 // Constants for marking non-key parts of a logical path
 const Value = '<value>';
