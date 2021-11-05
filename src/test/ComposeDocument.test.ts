@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { InitializeParams, Position, TextDocuments } from 'vscode-languageserver';
 import { ComposeLanguageClientCapabilities, DocumentSettings, DocumentSettingsNotification, DocumentSettingsNotificationParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ComposeDocument } from '../service/ComposeDocument';
+import { ExtendedPositionParams, PositionInfo } from '../service/ExtendedParams';
 import { runWithContext } from '../service/utils/ActionContext';
 import { DefaultInitializeParams, TestConnection } from './TestConnection';
 
@@ -39,7 +40,7 @@ services:
         profiles: ["service", "db"]
         volumes: # With a bonus comment
             - "foo:/bar:ro"
-`;
+        `;
 
 describe('ComposeDocument', () => {
     let testConnection: TestConnection;
@@ -69,25 +70,482 @@ describe('ComposeDocument', () => {
 
     describe('Common scenarios', () => {
         describe('Position / path scenarios', () => {
-            xit('Position info should be correct for keys at root');
+            it('Position info should be correct for keys at root', async () => {
+                const versionKeyPosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/version',
+                };
 
-            xit('Position info should be correct for keys at not-root');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 0), // Beginning of `version`
+                    versionKeyPosition
+                );
 
-            xit('Position info should be correct for separator after keys');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 3), // Middle of `version`
+                    versionKeyPosition
+                );
 
-            xit('Position info should be correct for scalar values of keys');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 6), // End of `version`
+                    versionKeyPosition
+                );
 
-            xit('Position info should be correct for collection values');
+                const serviceKeyPosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/services',
+                };
 
-            xit('Position info should be correct for collection values that are flow maps');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(4, 0), // Beginning of `services`
+                    serviceKeyPosition
+                );
 
-            xit('Position info should be correct for separator in collection values');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(4, 3), // Middle of `services`
+                    serviceKeyPosition
+                );
 
-            xit('Position info should be correct for values that are flow sequences');
+                const noKeyPosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/',
+                };
 
-            xit('Position info should be correct for whitespace-only lines');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(1, 0), // The blank line between `version` and the comment
+                    noKeyPosition
+                );
 
-            xit('Position info should be correct for comments');
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(19, 0), // The blank line at the end
+                    noKeyPosition
+                );
+            });
+
+            it('Position info should be correct for keys at not-root', async () => {
+                const fooServiceKeyPosition: PositionInfo = {
+                    indentDepth: 1,
+                    path: '/services/foo',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(5, 4), // The beginning of service `foo`
+                    fooServiceKeyPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(5, 5), // The middle of service `foo`
+                    fooServiceKeyPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(5, 6), // The end of service `foo`
+                    fooServiceKeyPosition
+                );
+
+                const dockerfileKeyPosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/build/dockerfile',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(9, 15), // The middle of the `dockerfile` key
+                    dockerfileKeyPosition
+                );
+            });
+
+            it('Position info should be correct for separator after keys', async () => {
+                const versionKeySepPosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/version/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 7), // The separator after `version`
+                    versionKeySepPosition
+                );
+
+                const fooKeySepPosition: PositionInfo = {
+                    indentDepth: 1,
+                    path: '/services/foo/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(5, 7), // The separator after `foo`
+                    fooKeySepPosition
+                );
+
+                const portPublishedKeySep: PositionInfo = {
+                    indentDepth: 3.5,
+                    path: '/services/foo/ports/<item>/published/<sep>'
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(12, 23), // The separator after `published` under the port
+                    portPublishedKeySep
+                );
+            });
+
+            it('Position info should be correct for scalar values of keys', async () => {
+                const versionValuePosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/version/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 8), // The space ahead of the value of `version`
+                    versionValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 9), // The beginning of the value of `version`
+                    versionValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 11), // The middle of the value of `version`
+                    versionValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(0, 13), // The end of the value of `version`
+                    versionValuePosition
+                );
+
+                const dockerfileValuePosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/build/dockerfile/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(9, 23), // The space ahead of the value of `dockerfile`
+                    dockerfileValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(9, 24), // The beginning of the value of `dockerfile`
+                    dockerfileValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(9, 27), // The middle of the value of `dockerfile`
+                    dockerfileValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(9, 32), // The end of the value of `dockerfile`
+                    dockerfileValuePosition
+                );
+            });
+
+            it('Position info should be correct for collection values', async () => {
+                const portItemValuePosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(15, 13), // The space ahead of the value of `ports[1]`
+                    portItemValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(15, 14), // The beginning of the value of `ports[1]`
+                    portItemValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(15, 17), // The middle of the value of `ports[1]`
+                    portItemValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(15, 19), // The end of the value of `ports[1]`
+                    portItemValuePosition
+                );
+            });
+
+            it('Position info should be correct for collection values that are flow maps', async () => {
+                const portItemTargetValuePosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/target/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 21), // The space ahead of the value of `ports[0]/target`
+                    portItemTargetValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 22), // The beginning of the value of `ports[0]/target`
+                    portItemTargetValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 23), // The middle of the value of `ports[0]/target`
+                    portItemTargetValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 24), // The end of the value of `ports[0]/target`
+                    portItemTargetValuePosition
+                );
+            });
+
+            it('Position info should be correct for keys in flow maps', async () => {
+                const portItemTargetPosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/target',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 13), // The space ahead of the key `ports[0]/target`
+                    portItemTargetPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 14), // The beginning of the key `ports[0]/target`
+                    portItemTargetPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 16), // The middle of the key `ports[0]/target`
+                    portItemTargetPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 19), // The end of the key `ports[0]/target`
+                    portItemTargetPosition
+                );
+
+                const portItemPublishedPosition: PositionInfo = {
+                    indentDepth: 3.5,
+                    path: '/services/foo/ports/<item>/published',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(12, 14), // The beginning of the key `ports[0]/published`
+                    portItemPublishedPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(12, 16), // The middle of the key `ports[0]/published`
+                    portItemPublishedPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(12, 22), // The end of the key `ports[0]/published`
+                    portItemPublishedPosition
+                );
+            });
+
+            it('Position info should be correct for separator in collection values', async () => {
+                const portItemSepPosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(15, 12), // The separator ahead of the value of `ports[1]`
+                    portItemSepPosition
+                );
+            });
+
+            it('Position info should be correct for separator in collection values that are flow maps', async () => {
+                const portItemSepPosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 12), // The separator ahead of the value of `ports[0]`
+                    portItemSepPosition
+                );
+
+                const portItemTargetSepPosition: PositionInfo = {
+                    indentDepth: 3,
+                    path: '/services/foo/ports/<item>/target/<sep>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(11, 20), // The separator after target in `ports[0]`
+                    portItemTargetSepPosition
+                );
+            });
+
+            it('Position info should be correct for values that are flow sequences', async () => {
+                const profilesValuePosition: PositionInfo = {
+                    indentDepth: 2,
+                    path: '/services/foo/profiles/<value>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(16, 17), // The space ahead of the value of `profiles`
+                    profilesValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(16, 18), // The beginning of the value of `profiles`
+                    profilesValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(16, 20), // The middle of the value of `profiles`
+                    profilesValuePosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(16, 34), // The end of the value of `profiles`
+                    profilesValuePosition
+                );
+            });
+
+            it('Position info should be correct for whitespace-only lines', async () => {
+                const whitespacePosition: PositionInfo = {
+                    indentDepth: 0,
+                    path: '/',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(1, 0), // The blank line after `version`
+                    whitespacePosition
+                );
+
+                const servicesKeyPosition: PositionInfo = {
+                    indentDepth: 1,
+                    path: '/services',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(19, 4), // The last line in the doc, with the cursor 1 indent over
+                    servicesKeyPosition
+                );
+
+                const fooKeyPosition: PositionInfo = {
+                    indentDepth: 2,
+                    path: '/services/foo',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(19, 8), // The last line in the doc, with the cursor 2 indents over
+                    fooKeyPosition
+                );
+            });
+
+            it('Position info should be correct for comments', async () => {
+                const commentPosition: PositionInfo = {
+                    indentDepth: -1,
+                    path: '/<comment>',
+                };
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(2, 1), // The comment after `version`
+                    commentPosition
+                );
+
+                await getPathAndCompare(
+                    testConnection,
+                    sharedComposeDocument,
+                    Position.create(17, 17), // The comment after `volumes:`
+                    commentPosition
+                );
+            });
 
             xit('Position info should be correct for lines with comments, but position is before the comment');
         });
@@ -254,4 +712,18 @@ async function sendAndAwaitDocument(testConnection: TestConnection, document: st
     // Grab the doc
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return testConnectionDocManager.get(uri)!;
+}
+
+async function getPathAndCompare(testConnection: TestConnection, document: ComposeDocument, position: Position, expected: PositionInfo): Promise<void> {
+    const params: ExtendedPositionParams = {
+        textDocument: document.id,
+        document: document,
+        position: position,
+    };
+
+    const actual = await runWithContext(testConnection.getMockContext(), async () => {
+        return document.getPositionInfo(params);
+    });
+
+    expected.should.deep.equal(actual);
 }
