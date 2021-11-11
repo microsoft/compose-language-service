@@ -7,6 +7,7 @@ import { CancellationToken, CompletionItem, CompletionParams, WorkDoneProgressRe
 import { ExtendedCompletionParams, ExtendedParams, ExtendedPositionParams } from '../../ExtendedParams';
 import { getCurrentContext } from '../../utils/ActionContext';
 import { ProviderBase } from '../ProviderBase';
+import { BuildCompletionCollection } from './BuildCompletionCollection';
 import { CompletionCollection } from './CompletionCollection';
 import { PortsCompletionCollection } from './PortsCompletionCollection';
 import { RootCompletionCollection } from './RootCompletionCollection';
@@ -27,6 +28,7 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
         this.completionCollections = [
             RootCompletionCollection,
             ServiceCompletionCollection,
+            BuildCompletionCollection,
             VolumesCompletionCollection,
             PortsCompletionCollection,
         ];
