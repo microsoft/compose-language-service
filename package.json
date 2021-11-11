@@ -1,7 +1,7 @@
 {
     "name": "@microsoft/compose-language-service",
     "author": "Microsoft Corporation",
-    "version": "0.0.3-alpha",
+    "version": "0.0.5-alpha",
     "publisher": "ms-azuretools",
     "description": "Language service for Docker Compose documents",
     "license": "See LICENSE in the project root for license information.",
@@ -25,7 +25,6 @@
         "unittest": "npm test -- --grep /unit/i",
         "pretest": "npm run build",
         "prepack": "npm run build",
-        "postinstall": "cd ./src/test/clientExtension && npm install",
         "update-compose-spec": "curl https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json --output ./resources/compose-spec.json"
     },
     "devDependencies": {
