@@ -3,9 +3,4 @@ steps:
     displayName: 'Component Detection'
     condition: ne(variables['System.PullRequest.IsFork'], 'True')
 
-  - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
-    displayName: 'SBoM Generation Task'
-    inputs:
-      BuildDropPath: '$(System.ArtifactsDirectory)'
-
   - template: compliance/compliance.yml
