@@ -3,7 +3,7 @@ steps:
     displayName: 'Component Detection'
     condition: ne(variables['System.PullRequest.IsFork'], 'True')
 
-   - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+  - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
     displayName: 'SBoM Generation Task'
     inputs:
       BuildDropPath: '$(build.artifactstagingdirectory)'
