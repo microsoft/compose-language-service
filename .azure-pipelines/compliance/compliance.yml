@@ -1,4 +1,11 @@
 steps:
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-antimalware.AntiMalware@3
+    displayName: 'AntiMalware Scanner'
+    inputs:
+      FileDirPath: '$(Build.SourcesDirectory)'
+      EnableServices: true
+    condition: and(ne(variables['System.PullRequest.IsFork'], 'True'), eq(variables['Agent.OS'], 'Windows_NT'), in(variables['Build.Reason'], 'Manual', 'Schedule')) # Only on scheduled and manual builds because it is slow
+
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-policheck.PoliCheck@1
     displayName: 'Run PoliCheck'
     inputs:
@@ -22,7 +29,9 @@ steps:
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@1
     displayName: 'Post Analysis'
     inputs:
-      AllTools: true
+      AllTools: false
+      CredScan: true
+      PoliCheck: true
     condition: and(ne(variables['System.PullRequest.IsFork'], 'True'), eq(variables['Agent.OS'], 'Windows_NT'), in(variables['Build.Reason'], 'Manual', 'Schedule'))
 
   - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
