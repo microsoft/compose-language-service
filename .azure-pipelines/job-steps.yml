@@ -32,12 +32,6 @@ steps:
       TargetFolder: '$(build.artifactstagingdirectory)'
     condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
 
-  - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
-    displayName: 'SBoM Generation Task'
-    inputs:
-      #BuildDropPath: '$(System.ArtifactsDirectory)'
-      BuildDropPath: '$(build.artifactstagingdirectory)'
-
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Package'
     inputs:
