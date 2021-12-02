@@ -41,7 +41,7 @@ steps:
     condition: and(ne(variables['System.PullRequest.IsFork'], 'True'), eq(variables['Agent.OS'], 'Linux'), in(variables['Build.Reason'], 'Manual', 'Schedule')) # Only on scheduled and manual builds because it is slow
 
   - task: PublishBuildArtifacts@1
-    displayName: 'Publish Package'
+    displayName: 'Publish SBoM'
     inputs:
       PathtoPublish: '$(build.artifactstagingdirectory)/_manifest'
       ArtifactName: '_manifest'
