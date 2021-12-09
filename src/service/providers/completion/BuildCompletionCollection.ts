@@ -31,6 +31,12 @@ export const BuildCompletionCollection = new CompletionCollection(
     { logicalPaths: [PositionAtBuildPathRegex, PositionInBuildKeyPathRegex], indentationDepth: 3 },
     ...[
         {
+            label: 'args:',
+            insertText: 'args:\n\t- ${1:name}=${2:value}$0',
+            insertTextFormat: InsertTextFormat.Snippet,
+            insertTextMode: InsertTextMode.adjustIndentation,
+        },
+        {
             label: 'context:',
             insertText: 'context: ${1:buildContext}$0',
             insertTextFormat: InsertTextFormat.Snippet,
@@ -41,10 +47,20 @@ export const BuildCompletionCollection = new CompletionCollection(
             insertTextFormat: InsertTextFormat.Snippet,
         },
         {
-            label: 'args:',
-            insertText: 'args:\n\t- ${1:name}=${2:value}$0',
+            label: 'labels:',
+            insertText: 'labels:\n\t- ${1:com.host.description}=${2:label}$0',
             insertTextFormat: InsertTextFormat.Snippet,
             insertTextMode: InsertTextMode.adjustIndentation,
+        },
+        {
+            label: 'network:',
+            insertText: 'network: ${1:networkName}$0',
+            insertTextFormat: InsertTextFormat.Snippet,
+        },
+        {
+            label: 'target:',
+            insertText: 'target: ${1:targetStage}$0',
+            insertTextFormat: InsertTextFormat.Snippet,
         },
     ]
 );
