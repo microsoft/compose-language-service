@@ -20,7 +20,6 @@ export class CompletionCollection extends Array<ExtendedCompletionItem> {
     public constructor(
         public readonly name: string,
         private readonly locationRequirements: CompletionLocationRequirements,
-        private readonly invalidTriggerCharacters: string[],
         ...items: ExtendedCompletionItem[]
     ) {
         super(...items);
@@ -33,10 +32,6 @@ export class CompletionCollection extends Array<ExtendedCompletionItem> {
 
         if (this.locationRequirements.indentationDepth !== undefined && this.locationRequirements.indentationDepth !== params.positionInfo.indentDepth) {
             return undefined; // Reject this collection: the indentation depth requirement is not satisfied
-        }
-
-        if (this.invalidTriggerCharacters.some(it => it === params.context?.triggerCharacter)) {
-            return undefined; // Reject this collection: the trigger character is not valid
         }
 
         const line = params.document.lineAt(params.position);

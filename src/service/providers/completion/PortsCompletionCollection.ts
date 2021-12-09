@@ -12,7 +12,6 @@ const PortItemStartRegex = /(\s*-\s*)(?<leadingQuote>"|')?\2\s*$/i;
 export const PortsCompletionCollection = new CompletionCollection(
     'ports',
     { logicalPaths: [/^\/services\/[.\w-]+\/ports\/<item>\/.*$/i], indentationDepth: 3 },
-    [], // Default trigger characters are OK
     ...[
         {
             matcher: PortItemStartRegex,

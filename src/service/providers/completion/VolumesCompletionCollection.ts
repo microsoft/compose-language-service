@@ -9,7 +9,6 @@ import { CompletionCollection } from './CompletionCollection';
 export const VolumesCompletionCollection = new CompletionCollection(
     'volumes',
     { logicalPaths: [/^\/services\/[.\w-]+\/volumes\/<item>\/.*$/i], indentationDepth: 3 },
-    [], // Default trigger characters are OK
     ...[
         {
             // Matches `  - ""` or `  -`, with allowances for other amounts of whitespace/quoting
