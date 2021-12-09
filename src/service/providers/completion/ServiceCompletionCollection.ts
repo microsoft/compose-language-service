@@ -27,6 +27,7 @@ const PositionInServiceKeyPathRegex = /^\/services\/[.\w-]+\/<value>$/i; // e.g.
 export const ServiceCompletionCollection = new CompletionCollection(
     'service',
     { logicalPaths: [PositionAtServicePathRegex, PositionInServiceKeyPathRegex], indentationDepth: 2 },
+    [':'], // Default trigger characters except ':'
     ...[
         {
             label: 'build:',
