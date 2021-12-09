@@ -3,12 +3,32 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { InsertTextFormat } from 'vscode-languageserver';
+import { InsertTextFormat, InsertTextMode } from 'vscode-languageserver';
 import { CompletionCollection } from './CompletionCollection';
+
+/**
+ * The position given when the cursor is inbetween the build key and first properties, i.e. at the | below:
+services:
+  foo:
+    build:
+      |
+      a: b
+ */
+const PositionAtBuildPathRegex = /^\/services\/[.\w-]+\/build$/i; // e.g. /services/foo/build
+
+/**
+ * The position given when the cursor is in a partially-typed properties in a service build, i.e. at the | below:
+services:
+  foo:
+    build:
+      a: b
+      b|
+ */
+const PositionInBuildKeyPathRegex = /^\/services\/[.\w-]+\/build\/<value>$/i; // e.g. /services/foo/build/<value>
 
 export const BuildCompletionCollection = new CompletionCollection(
     'build',
-    { logicalPaths: [/^\/services\/[.\w-]+\/build$/i], indentationDepth: 3 },
+    { logicalPaths: [PositionAtBuildPathRegex, PositionInBuildKeyPathRegex], indentationDepth: 3 },
     ...[
         {
             label: 'context:',
@@ -19,6 +39,12 @@ export const BuildCompletionCollection = new CompletionCollection(
             label: 'dockerfile:',
             insertText: 'dockerfile: ${1:dockerfile}$0',
             insertTextFormat: InsertTextFormat.Snippet,
+        },
+        {
+            label: 'args:',
+            insertText: 'args:\n\t- ${1:name}=${2:value}$0',
+            insertTextFormat: InsertTextFormat.Snippet,
+            insertTextMode: InsertTextMode.adjustIndentation,
         },
     ]
 );

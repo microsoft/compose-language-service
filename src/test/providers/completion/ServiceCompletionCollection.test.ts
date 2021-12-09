@@ -7,7 +7,7 @@ import { CompletionRequest, InsertTextFormat, InsertTextMode, Position, Response
 import { TestConnection } from '../../TestConnection';
 import { ExpectedCompletionItem, requestCompletionsAndCompare, UnexpectedCompletionItem } from './requestCompletionsAndCompare';
 
-// A subset of the completions that are provided by the ServiceComplectionCollection
+// A subset of the completions that are provided by the ServiceCompletionCollection
 const defaultExpected: ExpectedCompletionItem[] = [
     {
         // Build long form
@@ -35,7 +35,7 @@ const defaultExpected: ExpectedCompletionItem[] = [
     },
 ];
 
-// Completions that are not allowed from ServiceComplectionCollection
+// Completions that are not allowed from ServiceCompletionCollection
 const defaultUnexpected: UnexpectedCompletionItem[] = [
     {
         insertTextCanary: 'services',
@@ -48,7 +48,7 @@ const defaultUnexpected: UnexpectedCompletionItem[] = [
     },
 ];
 
-describe('ServiceComplectionCollection', () => {
+describe('ServiceCompletionCollection', () => {
     let testConnection: TestConnection;
     before('Prepare a language server for testing', async () => {
         testConnection = new TestConnection();

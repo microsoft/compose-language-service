@@ -62,6 +62,9 @@ export class MultiCompletionProvider extends ProviderBase<CompletionParams & Ext
             ctx.telemetry.properties.respondingCollections = respondingCollections.sort().join(',');
         }
 
+        // It should be noted, many of the completions include tabs `\t` which aren't allowed in YAML, however,
+        // VSCode automatically translates these into the configured tab size in spaces. It does the same for line endings.
+
         return results.length > 0 ? results : undefined;
     }
 }
