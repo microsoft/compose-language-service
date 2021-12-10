@@ -7,7 +7,7 @@ import { CompletionRequest, InsertTextFormat, Position, ResponseError } from 'vs
 import { TestConnection } from '../../TestConnection';
 import { ExpectedCompletionItem, requestCompletionsAndCompare, UnexpectedCompletionItem } from './requestCompletionsAndCompare';
 
-// A subset of the completions that are provided by the RootComplectionCollection
+// A subset of the completions that are provided by the RootCompletionCollection
 const defaultExpected: ExpectedCompletionItem[] = [
     {
         label: 'services:',
@@ -26,7 +26,7 @@ const defaultExpected: ExpectedCompletionItem[] = [
     },
 ];
 
-// Completions that are not allowed from RootComplectionCollection
+// Completions that are not allowed from RootCompletionCollection
 const defaultUnexpected: UnexpectedCompletionItem[] = [
     {
         insertTextCanary: 'build',
@@ -191,6 +191,20 @@ describe('RootCompletionCollection', () => {
                 testConnection,
                 uri,
                 Position.create(0, 2), // Indented on the empty line
+                undefined,
+                undefined,
+            );
+        });
+
+        it('Should NOT provide completions on an already-completed line', async () => {
+            const testObject = `services:`;
+
+            const uri = testConnection.sendTextAsYamlDocument(testObject);
+
+            await requestCompletionsAndCompare(
+                testConnection,
+                uri,
+                Position.create(0, 9), // After `services:`
                 undefined,
                 undefined,
             );
