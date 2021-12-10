@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$schema": "https://json-schema.org/draft/2019-09/schema#",
   "$id": "compose_spec.json",
   "type": "object",
   "title": "Compose Specification",
@@ -973,6 +973,9 @@
                 },
                 "memory": {
                   "type": "string"
+                },
+                "pids": {
+                  "type": "integer"
                 }
               },
               "additionalProperties": false,
