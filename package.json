@@ -1,7 +1,7 @@
 {
     "name": "@microsoft/compose-language-service",
     "author": "Microsoft Corporation",
-    "version": "0.0.6-alpha",
+    "version": "0.1.1-alpha",
     "publisher": "ms-azuretools",
     "description": "Language service for Docker Compose documents",
     "license": "See LICENSE in the project root for license information.",
@@ -45,6 +45,6 @@
         "ajv-formats": "^2.1.1",
         "vscode-languageserver": "^7.0.0",
         "vscode-languageserver-textdocument": "^1.0.3",
-        "yaml": "^2.0.0-9"
+        "yaml": "^2.0.0-10"
     }
 }
