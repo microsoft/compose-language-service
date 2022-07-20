@@ -5,7 +5,7 @@
 
 import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument';
-import { Document as YamlDocument, isDocument, parseDocument } from 'yaml';
+import { Document as YamlDocument, isDocument, Node as YamlNode, parseDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ExtendedPositionParams, PositionInfo } from './ExtendedParams';
 import { getCurrentContext } from './utils/ActionContext';
@@ -151,7 +151,7 @@ export class ComposeDocument {
         update: (document, changes, version) => document.update(TextDocument.update(document.textDocument, changes, version)),
     };
 
-    private buildYamlDocument(): YamlDocument {
+    private buildYamlDocument(): YamlDocument<YamlNode> {
         const yamlDocument = parseDocument(this.textDocument.getText(), { merge: true, prettyErrors: true });
 
         if (!isDocument(yamlDocument)) {
