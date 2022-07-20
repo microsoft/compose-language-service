@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, TextDocumentsConfiguration } from 'vscode-languageserver';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument';
 import { Document as YamlDocument, isDocument, parseDocument } from 'yaml';
 import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ExtendedPositionParams, PositionInfo } from './ExtendedParams';
@@ -28,6 +28,10 @@ export class ComposeDocument {
         return {
             uri: this.textDocument.uri,
         };
+    }
+
+    public get uri(): DocumentUri {
+        return this.textDocument.uri;
     }
 
     private constructor(doc: TextDocument) {
