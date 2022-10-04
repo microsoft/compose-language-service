@@ -4,7 +4,7 @@ jobs:
       vmImage: windows-latest
     steps:
       - template: job-steps.yml
-    inputs:
+    variables:
       Codeql.Enabled: true
 
   - job: Linux
@@ -12,7 +12,7 @@ jobs:
       vmImage: ubuntu-latest
     steps:
       - template: job-steps.yml
-    inputs:
+    variables:
       Codeql.Enabled: true
 
 trigger:
