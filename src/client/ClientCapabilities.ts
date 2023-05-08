@@ -8,8 +8,8 @@ import type { DocumentSettingsClientCapabilities } from './DocumentSettings';
 import type { AlternateYamlLanguageServiceClientCapabilities } from './AlternateYamlLanguageServiceClientCapabilities';
 
 export type ComposeLanguageClientCapabilities = Omit<ClientCapabilities, 'experimental'> & {
-    experimental?: {
-        documentSettings?: DocumentSettingsClientCapabilities;
-        alternateYamlLanguageService?: AlternateYamlLanguageServiceClientCapabilities;
+    readonly experimental?: {
+        readonly documentSettings?: DocumentSettingsClientCapabilities;
+        readonly alternateYamlLanguageService?: AlternateYamlLanguageServiceClientCapabilities;
     }
 };
