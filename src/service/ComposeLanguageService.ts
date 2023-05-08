@@ -101,7 +101,7 @@ export class ComposeLanguageService implements Disposable {
         if (altYamlCapabilities.basicCompletions && altYamlCapabilities.advancedCompletions) {
             this._capabilities.completionProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(altYamlCapabilities.basicCompletions ?? true, altYamlCapabilities.advancedCompletions ?? true));
+            this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(!altYamlCapabilities.basicCompletions, !altYamlCapabilities.advancedCompletions));
         }
 
         if (altYamlCapabilities.hover) {
