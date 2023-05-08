@@ -5,13 +5,14 @@
 
 import { expect } from 'chai';
 import { InitializeParams, Position, TextDocuments } from 'vscode-languageserver';
-import { ComposeLanguageClientCapabilities, DocumentSettings, DocumentSettingsNotification, DocumentSettingsNotificationParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
+import type { ComposeLanguageClientCapabilities } from '../client/ClientCapabilities';
+import { DocumentSettings, DocumentSettingsNotification, DocumentSettingsNotificationParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
 import { ComposeDocument } from '../service/ComposeDocument';
 import { ExtendedPositionParams, PositionInfo } from '../service/ExtendedParams';
 import { runWithContext } from '../service/utils/ActionContext';
 import { DefaultInitializeParams, TestConnection } from './TestConnection';
 
-const DocumentSettingsClientCapabilities: ComposeLanguageClientCapabilities = {
+const ClientCapabilities: ComposeLanguageClientCapabilities = {
     experimental: {
         documentSettings: {
             notify: true,
@@ -52,7 +53,7 @@ describe('ComposeDocument', () => {
     before('Prepare a language server for testing (with added document settings capability)', async () => {
         const initParams: InitializeParams = {
             ...DefaultInitializeParams,
-            ...{ capabilities: DocumentSettingsClientCapabilities },
+            ...{ capabilities: ClientCapabilities },
         };
         testConnection = new TestConnection(initParams);
 
