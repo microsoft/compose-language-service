@@ -94,7 +94,7 @@ export class ComposeLanguageService implements Disposable {
         if (altYamlCapabilities.syntaxValidation && altYamlCapabilities.schemaValidation) {
             // No-op, server doesn't send a capability for this
         } else {
-            this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay, !altYamlCapabilities.syntaxValidation, altYamlCapabilities.schemaValidation));
+            this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay, !altYamlCapabilities.syntaxValidation, !altYamlCapabilities.schemaValidation));
         }
 
         // Hook up all the applicable LSP listeners, which do not create Disposables for some reason
