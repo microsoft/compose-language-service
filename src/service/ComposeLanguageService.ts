@@ -87,8 +87,7 @@ export class ComposeLanguageService implements Disposable {
     private readonly _capabilities: ServerCapabilities = DefaultCapabilities;
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
-        const altYamlCapabilities: AlternateYamlLanguageServiceClientCapabilities =
-            (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService ||
+        const altYamlCapabilities = (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService ||
             DefaultAlternateYamlLanguageServiceClientCapabilities;
 
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
