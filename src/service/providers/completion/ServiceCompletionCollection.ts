@@ -143,7 +143,7 @@ export const ServiceCompletionCollection = new CompletionCollection(
             insertText: 'ports:\n\t-$0',
             insertTextFormat: InsertTextFormat.Snippet,
             insertTextMode: InsertTextMode.adjustIndentation,
-            isAdvancedComposeCompletion: true,
+            isAdvancedComposeCompletion: false,
         },
         {
             label: 'profiles:',
@@ -157,7 +157,7 @@ export const ServiceCompletionCollection = new CompletionCollection(
             insertText: 'volumes:\n\t-$0',
             insertTextFormat: InsertTextFormat.Snippet,
             insertTextMode: InsertTextMode.adjustIndentation,
-            isAdvancedComposeCompletion: true,
+            isAdvancedComposeCompletion: false,
         },
     ]
 );
