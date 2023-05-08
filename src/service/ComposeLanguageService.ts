@@ -18,6 +18,8 @@ import {
     TextDocumentSyncKind,
 }
     from 'vscode-languageserver';
+import { AlternateYamlLanguageServiceClientCapabilities } from '../client/AlternateYamlLanguageServiceClientCapabilities';
+import { ComposeLanguageClientCapabilities } from '../client/ClientCapabilities';
 import { DocumentSettingsNotificationParams, DocumentSettingsNotification } from '../client/DocumentSettings';
 import { initEvent } from '../client/TelemetryEvent';
 import { ComposeDocument } from './ComposeDocument';
@@ -31,20 +33,95 @@ import { ProviderBase } from './providers/ProviderBase';
 import { ActionContext, runWithContext } from './utils/ActionContext';
 import { TelemetryAggregator } from './utils/telemetry/TelemetryAggregator';
 
+const DefaultCapabilities: ServerCapabilities = {
+    // Text document synchronization
+    textDocumentSync: {
+        openClose: true,
+        change: TextDocumentSyncKind.Incremental,
+        willSave: false,
+        willSaveWaitUntil: false,
+        save: false,
+    },
+
+    // Both basic and advanced completions
+    completionProvider: {
+        triggerCharacters: ['-', ':', ' ', '"'],
+        resolveProvider: false,
+    },
+
+    // Hover over YAML keys
+    hoverProvider: true,
+
+    // Links to Docker Hub on image names
+    documentLinkProvider: {
+        resolveProvider: false,
+    },
+
+    // YAML formatting
+    documentFormattingProvider: true,
+
+    // Workspace features
+    workspace: {
+        workspaceFolders: {
+            supported: true,
+        },
+    },
+};
+
+// Default settings for a client with no alternate YAML language service
+const DefaultAlternateYamlLanguageServiceClientCapabilities: AlternateYamlLanguageServiceClientCapabilities = {
+    syntaxValidation: false,
+    schemaValidation: false,
+
+    basicCompletions: false,
+    advancedCompletions: false,
+    hover: false,
+    imageLinks: false,
+    formatting: false,
+};
+
 export class ComposeLanguageService implements Disposable {
     private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
     private readonly telemetryAggregator: TelemetryAggregator;
+    private readonly _capabilities: ServerCapabilities = DefaultCapabilities;
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
-        // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
-        this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay));
+        const altYamlCapabilities: AlternateYamlLanguageServiceClientCapabilities =
+            (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService ||
+            DefaultAlternateYamlLanguageServiceClientCapabilities;
 
-        // Hook up all the LSP listeners, which do not create Disposables for some reason
-        this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider());
-        this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
-        this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
-        this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
+        // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
+        if (altYamlCapabilities.syntaxValidation && altYamlCapabilities.schemaValidation) {
+            // No-op, server doesn't send a capability for this
+        } else {
+            this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay, !altYamlCapabilities.syntaxValidation, altYamlCapabilities.schemaValidation));
+        }
+
+        // Hook up all the applicable LSP listeners, which do not create Disposables for some reason
+        if (altYamlCapabilities.basicCompletions && altYamlCapabilities.advancedCompletions) {
+            this._capabilities.completionProvider = undefined;
+        } else {
+            this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(altYamlCapabilities.basicCompletions, altYamlCapabilities.advancedCompletions));
+        }
+
+        if (altYamlCapabilities.hover) {
+            this._capabilities.hoverProvider = undefined;
+        } else {
+            this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
+        }
+
+        if (altYamlCapabilities.imageLinks) {
+            this._capabilities.documentLinkProvider = undefined;
+        } else {
+            this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
+        }
+
+        if (altYamlCapabilities.formatting) {
+            this._capabilities.documentFormattingProvider = undefined;
+        } else {
+            this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
+        }
 
         // Hook up one additional notification handler
         this.connection.onNotification(DocumentSettingsNotification.method, (params) => this.onDidChangeDocumentSettings(params));
@@ -63,29 +140,7 @@ export class ComposeLanguageService implements Disposable {
     }
 
     public get capabilities(): ServerCapabilities {
-        return {
-            textDocumentSync: {
-                openClose: true,
-                change: TextDocumentSyncKind.Incremental,
-                willSave: false,
-                willSaveWaitUntil: false,
-                save: false,
-            },
-            completionProvider: {
-                triggerCharacters: ['-', ':', ' ', '"'],
-                resolveProvider: false,
-            },
-            hoverProvider: true,
-            documentLinkProvider: {
-                resolveProvider: false,
-            },
-            documentFormattingProvider: true,
-            workspace: {
-                workspaceFolders: {
-                    supported: true,
-                },
-            },
-        };
+        return this._capabilities;
     }
 
     private onDidChangeDocumentSettings(params: DocumentSettingsNotificationParams): void {
