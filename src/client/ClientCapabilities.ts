@@ -7,7 +7,7 @@ import type { ClientCapabilities } from 'vscode-languageserver-protocol';
 import type { DocumentSettingsClientCapabilities } from './DocumentSettings';
 import type { AlternateYamlLanguageServiceClientCapabilities } from './AlternateYamlLanguageServiceClientCapabilities';
 
-export type ComposeLanguageClientCapabilities = ClientCapabilities & {
+export type ComposeLanguageClientCapabilities = Omit<ClientCapabilities, 'experimental'> & {
     experimental?: {
         documentSettings?: DocumentSettingsClientCapabilities;
         alternateYamlLanguageService?: AlternateYamlLanguageServiceClientCapabilities;
