@@ -12,7 +12,7 @@ import { ExtendedPositionParams, PositionInfo } from '../service/ExtendedParams'
 import { runWithContext } from '../service/utils/ActionContext';
 import { DefaultInitializeParams, TestConnection } from './TestConnection';
 
-const ClientCapabilities: ComposeLanguageClientCapabilities = {
+const DocumentSettingsClientCapabilities: ComposeLanguageClientCapabilities = {
     experimental: {
         documentSettings: {
             notify: true,
@@ -53,7 +53,7 @@ describe('ComposeDocument', () => {
     before('Prepare a language server for testing (with added document settings capability)', async () => {
         const initParams: InitializeParams = {
             ...DefaultInitializeParams,
-            ...{ capabilities: ClientCapabilities },
+            ...{ capabilities: DocumentSettingsClientCapabilities },
         };
         testConnection = new TestConnection(initParams);
 
