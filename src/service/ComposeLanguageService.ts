@@ -87,24 +87,23 @@ export class ComposeLanguageService implements Disposable {
     private readonly _capabilities: ServerCapabilities = DefaultCapabilities;
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
-        let altYamlCapabilities: AlternateYamlLanguageServiceClientCapabilities | undefined;
+        let altYamlCapabilities = (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService;
 
-        // Intentional assignment check
-        // eslint-disable-next-line no-cond-assign
-        if (altYamlCapabilities = (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService) {
+        if (altYamlCapabilities) {
             connection.console.info('An alternate YAML language service is present. The Compose language service will not enable features already provided by the alternate.');
         } else {
             altYamlCapabilities = DefaultAlternateYamlLanguageServiceClientCapabilities;
         }
 
-        // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
         if (altYamlCapabilities.syntaxValidation && altYamlCapabilities.schemaValidation) {
-            // No-op, server doesn't send a capability for this
+            // Noop. No server-side capability needs to be set for diagnostics because it is based on pushing from server to client.
         } else {
+            // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
             this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay, !altYamlCapabilities.syntaxValidation, !altYamlCapabilities.schemaValidation));
         }
 
         // Hook up all the applicable LSP listeners, which do not create Disposables for some reason
+
         if (altYamlCapabilities.basicCompletions && altYamlCapabilities.advancedCompletions) {
             this._capabilities.completionProvider = undefined;
         } else {
