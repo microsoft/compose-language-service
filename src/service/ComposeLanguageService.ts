@@ -95,12 +95,15 @@ export class ComposeLanguageService implements Disposable {
             altYamlCapabilities = DefaultAlternateYamlLanguageServiceClientCapabilities;
         }
 
+        // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
+
         if (altYamlCapabilities.syntaxValidation && altYamlCapabilities.schemaValidation) {
             // Noop. No server-side capability needs to be set for diagnostics because it is based on pushing from server to client.
         } else {
-            // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
             this.createDocumentManagerHandler(this.documentManager.onDidChangeContent, new DiagnosticProvider(clientParams.initializationOptions?.diagnosticDelay, !altYamlCapabilities.syntaxValidation, !altYamlCapabilities.schemaValidation));
         }
+
+        // End of document listeners
 
         // Hook up all the applicable LSP listeners, which do not create Disposables for some reason
 
@@ -127,6 +130,8 @@ export class ComposeLanguageService implements Disposable {
         } else {
             this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
         }
+
+        // End of LSP listeners
 
         // Hook up one additional notification handler
         this.connection.onNotification(DocumentSettingsNotification.method, (params) => this.onDidChangeDocumentSettings(params));
