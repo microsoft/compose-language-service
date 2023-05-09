@@ -87,8 +87,15 @@ export class ComposeLanguageService implements Disposable {
     private readonly _capabilities: ServerCapabilities = DefaultCapabilities;
 
     public constructor(public readonly connection: Connection, private readonly clientParams: InitializeParams) {
-        const altYamlCapabilities = (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService ||
-            DefaultAlternateYamlLanguageServiceClientCapabilities;
+        let altYamlCapabilities: AlternateYamlLanguageServiceClientCapabilities | undefined;
+
+        // Intentional assignment check
+        // eslint-disable-next-line no-cond-assign
+        if (altYamlCapabilities = (clientParams.capabilities as ComposeLanguageClientCapabilities).experimental?.alternateYamlLanguageService) {
+            connection.console.info('An alternate YAML language service is present. The Compose language service will not enable features already provided by the alternate.');
+        } else {
+            altYamlCapabilities = DefaultAlternateYamlLanguageServiceClientCapabilities;
+        }
 
         // Hook up the document listeners, which create a Disposable which will be added to this.subscriptions
         if (altYamlCapabilities.syntaxValidation && altYamlCapabilities.schemaValidation) {
