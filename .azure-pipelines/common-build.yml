@@ -5,6 +5,8 @@ stages:
         pool:
           type: windows
           name: OneBranchPipelines
+        variables:
+          ob_outputDirectory: $(Build.ArtifactStagingDirectory)\output
         steps:
           - task: NodeTool@0
             displayName: Using Node.js
