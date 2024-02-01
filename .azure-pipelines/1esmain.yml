@@ -25,7 +25,7 @@ resources:
       type: github
       name: microsoft/vscode-azuretools
       ref: main
-      endpoint: GitHub
+      endpoint: GitHub-AzureTools
 
 extends:
   # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
