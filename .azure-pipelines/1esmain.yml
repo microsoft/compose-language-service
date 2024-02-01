@@ -44,7 +44,7 @@ extends:
             templateContext:
               outputs:
                 - output: pipelineArtifact
-                  targetPath: $(System.DefaultWorkingDirectory)/Samples
+                  targetPath: $(build.artifactstagingdirectory)/build
                   artifactName: artifactName
             # Define the steps that the pipeline will run.
             # In most cases, copy and paste the steps from the original pipeline.
@@ -89,7 +89,7 @@ extends:
                   TargetFolder: "$(build.artifactstagingdirectory)/build"
                 condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
 
-              - task: 1ES.PublishBuildArtifact@1
+              - task: 1ES.PublishPipelineArtifact@1
                 displayName: "Publish artifacts: packages and vsix"
                 inputs:
                   PathtoPublish: "$(build.artifactstagingdirectory)/build"
