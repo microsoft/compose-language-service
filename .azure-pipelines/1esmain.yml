@@ -24,7 +24,7 @@ resources:
     - repository: templates
       type: github
       name: microsoft/vscode-azuretools
-      ref: main
+      ref: bmw/1es
       endpoint: GitHub-AzureTools
 
 extends:
@@ -54,4 +54,4 @@ extends:
             # Define the steps that the pipeline will run.
             # In most cases, copy and paste the steps from the original pipeline.
             steps:
-              - template: ./common-build.yml
+              - template: azure-pipelines/common-build.yml@templates
