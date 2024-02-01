@@ -36,16 +36,16 @@ extends:
       vmImage: windows-latest
 
     stages:
-      - stage: Stage
+      - stage: Build Stage
         jobs:
-          - job: HostJob
+          - job: Build Job
             # If the pipeline publishes artifacts, use `templateContext` to define the artifacts.
             # This will enable 1ES PT to run SDL analysis tools on the artifacts and then upload them.
             templateContext:
               outputs:
                 - output: pipelineArtifact
                   targetPath: $(build.artifactstagingdirectory)/build
-                  artifactName: artifactName
+                  artifactName: Build
             # Define the steps that the pipeline will run.
             # In most cases, copy and paste the steps from the original pipeline.
             steps:
@@ -61,11 +61,11 @@ extends:
                   command: custom
                   customCommand: ci --no-optional
 
-              - bash: |
-                  /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-                  echo ">>> Started xvfb"
-                displayName: Start X Virtual Frame Buffer
-                condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+              # - bash: |
+              #     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+              #     echo ">>> Started xvfb"
+              #   displayName: Start X Virtual Frame Buffer
+              #   condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
 
               - task: Npm@1
                 displayName: "Build"
@@ -88,6 +88,12 @@ extends:
                     **/*.tgz
                   TargetFolder: "$(build.artifactstagingdirectory)/build"
                 condition: and(succeeded(), ne(variables['System.PullRequest.IsFork'], 'True'))
+
+              - task: Npm@1
+                displayName: "Test"
+                inputs:
+                  command: custom
+                  customCommand: run test
 
               # - task: 1ES.PublishPipelineArtifact@1
               #   displayName: "Publish artifacts: packages and vsix"
