@@ -36,9 +36,9 @@ extends:
       vmImage: windows-latest
 
     stages:
-      - stage: Build Stage
+      - stage: BuildStage
         jobs:
-          - job: Build Job
+          - job: BuildJob
             # If the pipeline publishes artifacts, use `templateContext` to define the artifacts.
             # This will enable 1ES PT to run SDL analysis tools on the artifacts and then upload them.
             templateContext:
@@ -102,8 +102,8 @@ extends:
               #     ArtifactName: $(artifact_name)
               #   condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
 
-      - stage: Second Stage
+      - stage: SecondStage
         jobs:
-          - job: Second Stage Job
+          - job: SecondStageJob
             steps:
               - script: echo "This is the second stage job"
