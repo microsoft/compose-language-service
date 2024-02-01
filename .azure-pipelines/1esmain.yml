@@ -101,3 +101,9 @@ extends:
               #     PathtoPublish: "$(build.artifactstagingdirectory)/build"
               #     ArtifactName: $(artifact_name)
               #   condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
+
+      - stage: Second Stage
+        jobs:
+          - job: Second Stage Job
+            steps:
+              - script: echo "This is the second stage job"
