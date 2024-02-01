@@ -32,7 +32,7 @@ extends:
     pool:
       name: VSEngSS-MicroBuild2022-1ES # Name of your hosted pool
       #image: windows-latest # Name of the image in your pool. If not specified, first image of the pool is used
-      #os: windows # OS of the image. Allowed values: windows, linux, macOS
+      os: windows # OS of the image. Allowed values: windows, linux, macOS
       vmImage: windows-latest
 
     stages:
@@ -49,4 +49,49 @@ extends:
             # Define the steps that the pipeline will run.
             # In most cases, copy and paste the steps from the original pipeline.
             steps:
-              - powershell: echo "Hello World from host"
+              - task: NodeTool@0
+                displayName: Using Node.js
+                inputs:
+                  versionSource: fromFile
+                  versionFilePath: .nvmrc
+
+              - task: Npm@1
+                displayName: Install Dependencies
+                inputs:
+                  command: custom
+                  customCommand: ci --no-optional
+
+              - bash: |
+                  /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+                  echo ">>> Started xvfb"
+                displayName: Start X Virtual Frame Buffer
+                condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+
+              - task: Npm@1
+                displayName: "Build"
+                inputs:
+                  command: custom
+                  customCommand: run build
+
+              - task: Npm@1
+                displayName: "Package"
+                inputs:
+                  command: custom
+                  customCommand: run package
+
+              - task: CopyFiles@2
+                displayName: "Copy packages and vsix to staging directory"
+                inputs:
+                  Contents: |
+                    **/*.vsix
+                    **/*.tar.gz
+                    **/*.tgz
+                  TargetFolder: "$(build.artifactstagingdirectory)/build"
+                condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
+
+              - task: 1ES.PublishBuildArtifact@1
+                displayName: "Publish artifacts: packages and vsix"
+                inputs:
+                  PathtoPublish: "$(build.artifactstagingdirectory)/build"
+                  ArtifactName: $(artifact_name)
+                condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
