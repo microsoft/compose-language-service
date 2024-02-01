@@ -21,6 +21,11 @@ resources:
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/tags/release
+    - repository: templates
+      type: github
+      name: microsoft/vscode-azuretools
+      ref: main
+      endpoint: GitHub
 
 extends:
   # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
@@ -102,8 +107,8 @@ extends:
               #     ArtifactName: $(artifact_name)
               #   condition: and(eq(variables['Agent.OS'], 'Linux'), ne(variables['System.PullRequest.IsFork'], 'True'))
 
-      - stage: SecondStage
-        jobs:
-          - job: SecondStageJob
-            steps:
-              - script: echo "This is the second stage job"
+      # - stage: SecondStage
+      #   jobs:
+      #     - job: SecondStageJob
+      #       steps:
+      #         - script: echo "This is the second stage job"
