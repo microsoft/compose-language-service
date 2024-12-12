@@ -15,6 +15,7 @@ export type AlternateYamlLanguageServiceClientCapabilities = {
     // LSP features
     readonly basicCompletions: boolean,
     readonly advancedCompletions: boolean,
+    readonly serviceStartup: boolean,
     readonly hover: boolean,
     readonly imageLinks: boolean,
     readonly formatting: boolean,
