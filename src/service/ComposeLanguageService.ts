@@ -81,7 +81,7 @@ const DefaultAlternateYamlLanguageServiceClientCapabilities: AlternateYamlLangua
 
     basicCompletions: false,
     advancedCompletions: false,
-    serviceStartup: false,
+    serviceStartupCodeLens: false,
     hover: false,
     imageLinks: false,
     formatting: false,
@@ -120,7 +120,7 @@ export class ComposeLanguageService implements Disposable {
             this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(!altYamlCapabilities.basicCompletions, !altYamlCapabilities.advancedCompletions));
         }
 
-        if (altYamlCapabilities.serviceStartup) {
+        if (altYamlCapabilities.serviceStartupCodeLens) {
             this._capabilities.codeLensProvider = undefined;
         } else {
             this.createLspHandler(this.connection.onCodeLens, new ServiceStartupCodeLensProvider());
