@@ -36,7 +36,9 @@ export class ServiceStartupCodeLensProvider extends ProviderBase<CodeLensParams 
                     lens.command = {
                         title: '$(run-all) Run All Services',
                         command: 'vscode-docker.compose.up',
-                        arguments: [params.document],
+                        arguments: [
+                            /* dockerComposeFileUri: */ params.document.uri
+                        ],
                     };
                     results.push(lens);
                 }
@@ -63,7 +65,7 @@ export class ServiceStartupCodeLensProvider extends ProviderBase<CodeLensParams 
                         title: '$(play) Run Service',
                         command: 'vscode-docker.compose.up.subset',
                         arguments: [ // Arguments are from here: https://github.com/microsoft/vscode-docker/blob/a45a3dfc8e582f563292a707bbe56f616f7fedeb/src/commands/compose/compose.ts#L79
-                            /* dockerComposeFileUri: */ params.document,
+                            /* dockerComposeFileUri: */ params.document.uri,
                             /* selectedComposeFileUris: */ undefined,
                             /* preselectedServices: */[service.key.value],
                         ],

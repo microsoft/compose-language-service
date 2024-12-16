@@ -23,13 +23,12 @@ describe('ServiceStartupCodeLensProvider', () => {
     describe('Common scenarios', () => {
         it('Should provide a code lens to start all services at the root services node', async () => {
             const testObject = {
-                version: '123',
                 services: {}
             };
 
             const expected = [
                 {
-                    range: Range.create(1, 0, 1, 8),
+                    range: Range.create(0, 0, 0, 8),
                     command: {
                         command: 'vscode-docker.compose.up'
                     }
