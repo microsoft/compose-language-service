@@ -1,4 +1,4 @@
-## 0.4.0 - 1 April 2025
+## 0.4.0 - 17 April 2025
 ### Breaking Changes
 * The service startup CodeLens has changed the command it will call to `vscode-containers.compose.up`.
 
