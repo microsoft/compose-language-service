@@ -3,7 +3,7 @@
     "publisher": "ms-azuretools",
     "version": "0.0.1",
     "engines": {
-        "vscode": "^1.69.0"
+        "vscode": "^1.105.0"
     },
     "activationEvents": [
         "onLanguage:dockercompose",
@@ -11,10 +11,10 @@
     ],
     "main": "./dist/extension.js",
     "dependencies": {
-        "vscode-languageclient": "^8.0.0"
+        "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/vscode": "1.69.0"
+        "@types/vscode": "1.105.0"
     },
     "contributes": {
         "configurationDefaults": {
