@@ -119,31 +119,31 @@ export class ComposeLanguageService implements Disposable {
         if (altYamlCapabilities.basicCompletions && altYamlCapabilities.advancedCompletions) {
             this._capabilities.completionProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onCompletion, new MultiCompletionProvider(!altYamlCapabilities.basicCompletions, !altYamlCapabilities.advancedCompletions));
+            this.createLspHandler(this.connection.onCompletion.bind(this), new MultiCompletionProvider(!altYamlCapabilities.basicCompletions, !altYamlCapabilities.advancedCompletions));
         }
 
         if (altYamlCapabilities.serviceStartupCodeLens) {
             this._capabilities.codeLensProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onCodeLens, new ServiceStartupCodeLensProvider());
+            this.createLspHandler(this.connection.onCodeLens.bind(this), new ServiceStartupCodeLensProvider());
         }
 
         if (altYamlCapabilities.hover) {
             this._capabilities.hoverProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onHover, new KeyHoverProvider());
+            this.createLspHandler(this.connection.onHover.bind(this), new KeyHoverProvider());
         }
 
         if (altYamlCapabilities.imageLinks) {
             this._capabilities.documentLinkProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onDocumentLinks, new ImageLinkProvider());
+            this.createLspHandler(this.connection.onDocumentLinks.bind(this), new ImageLinkProvider());
         }
 
         if (altYamlCapabilities.formatting) {
             this._capabilities.documentFormattingProvider = undefined;
         } else {
-            this.createLspHandler(this.connection.onDocumentFormatting, new DocumentFormattingProvider());
+            this.createLspHandler(this.connection.onDocumentFormatting.bind(this), new DocumentFormattingProvider());
         }
 
         // End of LSP listeners
