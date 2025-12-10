@@ -10,10 +10,6 @@ const vscode = require('vscode');
  * that the compose language service can disable
  */
 class AlternateYamlLanguageServiceClientFeature {
-    clear() {
-        throw new Error('Method not implemented.');
-    }
-
     getState() {
         return {
             kind: 'static'

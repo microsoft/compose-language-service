@@ -12,10 +12,6 @@ class DocumentSettingsClientFeature {
         this.disposables = [];
     }
 
-    clear() {
-        throw new Error('Method not implemented.');
-    }
-
     getState() {
         return {
             kind: 'static'
