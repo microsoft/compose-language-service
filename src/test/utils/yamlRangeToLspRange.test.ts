@@ -9,26 +9,26 @@ import type { Range as YamlRange } from 'yaml';
 import { yamlRangeToLspRange } from '../../service/utils/yamlRangeToLspRange';
 
 describe('(Unit) yamlRangeToLspRange', () => {
-  describe('Common scenarios', () => {
-    it('Should return the correct result for two-integer ranges', () => {
-      const doc = TextDocument.create('file:///foo', 'dockercompose', 1, `version: '123'
+    describe('Common scenarios', () => {
+        it('Should return the correct result for two-integer ranges', () => {
+            const doc = TextDocument.create('file:///foo', 'dockercompose', 1, `version: '123'
 services:
   foo:
     image: redis`);
 
-      const result = yamlRangeToLspRange(doc, [4, 29]);
-      result.should.deep.equal(Range.create(0, 4, 2, 4));
-    });
+            const result = yamlRangeToLspRange(doc, [4, 29]);
+            result.should.deep.equal(Range.create(0, 4, 2, 4));
+        });
 
-    it('Should return the correct result for yaml `Range` objects', () => {
-      const doc = TextDocument.create('file:///foo', 'dockercompose', 1, `version: '123'
+        it('Should return the correct result for yaml `Range` objects', () => {
+            const doc = TextDocument.create('file:///foo', 'dockercompose', 1, `version: '123'
 services:
   foo:
     image: redis`);
 
-      const yamlRange: YamlRange = [4, 29, 30];
-      const result = yamlRangeToLspRange(doc, yamlRange);
-      result.should.deep.equal(Range.create(0, 4, 2, 4));
+            const yamlRange: YamlRange = [4, 29, 30];
+            const result = yamlRangeToLspRange(doc, yamlRange);
+            result.should.deep.equal(Range.create(0, 4, 2, 4));
+        });
     });
-  });
 });
