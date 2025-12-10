@@ -146,7 +146,6 @@ describe('(Unit) TelemetryAggregator', () => {
             const inputEvent: TelemetryEvent = initEvent('canary');
 
             // Deleting the measurements property will cause the aggregation procedure to throw
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             delete (inputEvent as any).measurements;
 
             const expected: TelemetryEvent = initEvent('telemetryaggregatorfailure');

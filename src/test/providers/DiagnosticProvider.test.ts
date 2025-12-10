@@ -201,7 +201,7 @@ async function awaitDiagnosticsAndCompare(testConnection: TestConnection, testOb
 
 function diagnosticsMatch(actual: Diagnostic, expected: ExpectedDiagnostic): boolean {
     return (
-        actual.message.indexOf(expected.contentCanary) >= 0 &&
+        actual.message.includes(expected.contentCanary) &&
         actual.range.start.line === expected.range.start.line &&
         actual.range.start.character === expected.range.start.character &&
         actual.range.end.line === expected.range.end.line &&

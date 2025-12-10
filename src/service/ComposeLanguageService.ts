@@ -88,7 +88,7 @@ const DefaultAlternateYamlLanguageServiceClientCapabilities: AlternateYamlLangua
 };
 
 export class ComposeLanguageService implements Disposable {
-    private readonly documentManager: TextDocuments<ComposeDocument> = new TextDocuments(ComposeDocument.DocumentManagerConfig);
+    private readonly documentManager = new TextDocuments<ComposeDocument>(ComposeDocument.DocumentManagerConfig);
     private readonly subscriptions: Disposable[] = [];
     private readonly telemetryAggregator: TelemetryAggregator;
     private readonly _capabilities: ServerCapabilities = DefaultCapabilities;

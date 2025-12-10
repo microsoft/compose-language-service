@@ -629,7 +629,6 @@ describe('ComposeDocument', () => {
         describe('DocumentSettings scenarios', () => {
             it('Should guess document settings correctly if the client doesn\'t support DocumentSettings', async () => {
                 // Clear out the settings first, to force the ComposeDocument to recompute it
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (noDocSettingsSharedComposeDocument as any).documentSettings = undefined;
 
                 const settings = await runWithContext(noDocSettingsConnection.getMockContext(), async () => {
@@ -653,7 +652,6 @@ describe('ComposeDocument', () => {
 
             it('Should ask client for document settings if the client does support DocumentSettings', async () => {
                 // Clear out the settings first, to force the ComposeDocument to recompute it
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (sharedComposeDocument as any).documentSettings = undefined;
 
                 const requestPromise = new Promise<void>((resolve, reject) => {
@@ -665,7 +663,6 @@ describe('ComposeDocument', () => {
                         };
                     });
 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sharedComposeDocument as any).guessDocumentSettings = function () {
                         reject('Should not be guessing settings if the client can answer');
                     };
@@ -704,7 +701,6 @@ describe('ComposeDocument', () => {
                     };
                 });
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const settings = (sharedComposeDocument as any).documentSettings as DocumentSettings;
                 settings.eol.should.equal(LF);
                 settings.tabSize.should.equal(3);
@@ -748,7 +744,6 @@ services:
 });
 
 async function sendAndAwaitDocument(testConnection: TestConnection, document: string): Promise<ComposeDocument> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const testConnectionDocManager = (testConnection.languageService as any).documentManager as TextDocuments<ComposeDocument>;
 
     // Set up a listener so we can wait for the service to get the document
@@ -764,7 +759,6 @@ async function sendAndAwaitDocument(testConnection: TestConnection, document: st
     await waitListener;
 
     // Grab the doc
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return testConnectionDocManager.get(uri)!;
 }
 

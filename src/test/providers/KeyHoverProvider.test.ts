@@ -255,11 +255,9 @@ async function requestHoverAndCompare(testConnection: TestConnection, uri: Docum
         expect(result).to.be.ok;
         expect(result?.range).to.be.ok;
 
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         result!.range!.should.deep.equal(expected.range);
 
         MarkupContent.is(result!.contents).should.be.true;
         (result!.contents as MarkupContent).value.should.contain(expected.contentsCanary);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
 }
