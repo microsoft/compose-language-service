@@ -26,7 +26,6 @@
                 "--disable-extension=docker.docker", // Keep the Docker DX extension from running so it doesn't interfere with testing
                 "--disable-extension=redhat.vscode-yaml", // Keep the YAML extension from running so it doesn't interfere with testing
             ],
-            "preLaunchTask": "tsc-watch: client extension",
             "presentation": {
                 "hidden": true,
             }
@@ -57,7 +56,7 @@
                 "group": "Live testing",
                 "order": 1
             },
-            "preLaunchTask": "tsc-watch: language service"
+            "preLaunchTask": "Build+Watch+CJS"
         }
     ]
 }

@@ -2,12 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build+Watch",
+            "label": "Build+Watch+CJS",
             "type": "shell",
             "command": "npm",
             "args": [
                 "run",
-                "build:esm",
+                "build:cjs",
                 "--",
                 "--watch",
             ],
@@ -20,20 +20,6 @@
                 "revealProblems": "onProblem"
             },
             "problemMatcher": "$tsc-watch",
-        },
-        {
-            "type": "typescript",
-            "tsconfig": "src/test/clientExtension/tsconfig.json",
-            "option": "watch",
-            "problemMatcher": [
-                "$tsc-watch"
-            ],
-            "group": "build",
-            "presentation": {
-                "reveal": "never"
-            },
-            "isBackground": true,
-            "label": "tsc-watch: client extension"
         }
     ]
 }

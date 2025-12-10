@@ -9,7 +9,7 @@
         "onLanguage:dockercompose",
         "onStartupFinished"
     ],
-    "main": "./dist/extension.js",
+    "main": "./extension.js",
     "dependencies": {
         "vscode-languageclient": "^9.0.1"
     },
