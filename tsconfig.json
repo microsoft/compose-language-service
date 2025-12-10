@@ -19,7 +19,7 @@
         "stripInternal": true,
     },
     "exclude": [
-        "src/test",
+        "src/test/clientExtension",
         "**/dist",
         "bin"
     ],
