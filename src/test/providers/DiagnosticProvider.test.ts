@@ -70,6 +70,10 @@ services:
                     range: Range.create(8, 0, 8, 0),
                     contentCanary: 'and end with a ]',
                 },
+                {
+                    range: Range.create(7, 2, 7, 3),
+                    contentCanary: 'comment with trailing content',
+                }
             ];
 
             await awaitDiagnosticsAndCompare(testConnection, malformedTestObject, expected);
