@@ -14,7 +14,7 @@ interface ExpectedHover {
 
 describe('KeyHoverProvider', () => {
     let testConnection: TestConnection;
-    before('Prepare a language server for testing', async () => {
+    before('Prepare a language server for testing', () => {
         testConnection = new TestConnection();
     });
 

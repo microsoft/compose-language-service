@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as util from 'util';
 import { Connection, Disposable } from 'vscode-languageserver';
 import { initEvent, TelemetryEvent } from '../../../client/TelemetryEvent';
 import { logNormal } from './logNormal';
@@ -45,8 +46,7 @@ export class TelemetryAggregator implements Disposable {
                 this.connection.telemetry.logEvent(evt);
             }
         } catch (err) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const error = err instanceof Error ? err : Error((err as any).toString());
+            const error = err instanceof Error ? err : Error(util.inspect(err));
             const telemetryFailedEvent = initEvent('telemetryaggregatorfailure');
 
             telemetryFailedEvent.properties.result = 'Failed';

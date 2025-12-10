@@ -664,7 +664,7 @@ describe('ComposeDocument', () => {
                     });
 
                     (sharedComposeDocument as any).guessDocumentSettings = function () {
-                        reject('Should not be guessing settings if the client can answer');
+                        reject(new Error('Should not be guessing settings if the client can answer'));
                     };
                 });
 

@@ -4,12 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { expect } from 'chai';
-import { DocumentFormattingRequest, DocumentUri, FormattingOptions, ResponseError, TextEdit } from 'vscode-languageserver-protocol';
+import { DocumentFormattingRequest, DocumentUri, FormattingOptions, ResponseError } from 'vscode-languageserver-protocol';
 import { TestConnection } from '../TestConnection';
 
 describe('DocumentFormattingProvider', () => {
     let testConnection: TestConnection;
-    before('Populate the language server with a compose document', async () => {
+    before('Populate the language server with a compose document', () => {
         testConnection = new TestConnection();
     });
 

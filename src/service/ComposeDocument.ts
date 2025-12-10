@@ -82,9 +82,7 @@ export class ComposeDocument {
         }
 
         // If the capability is not present, or the above didn't get a result for some reason, try heuristically guessing
-        if (!this.documentSettings) {
-            this.documentSettings = this.guessDocumentSettings();
-        }
+        this.documentSettings ??= this.guessDocumentSettings();
 
         return this.documentSettings;
     }

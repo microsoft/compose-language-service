@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { expect } from 'chai';
-import { DocumentLink, DocumentLinkRequest, DocumentUri, Range, ResponseError } from 'vscode-languageserver';
+import { DocumentLinkRequest, DocumentUri, Range, ResponseError } from 'vscode-languageserver';
 import { TestConnection } from '../TestConnection';
 
 interface ExpectedImageLink {
@@ -14,7 +14,7 @@ interface ExpectedImageLink {
 
 describe('ImageLinkProvider', () => {
     let testConnection: TestConnection;
-    before('Prepare a language server for testing', async () => {
+    before('Prepare a language server for testing', () => {
         testConnection = new TestConnection();
     });
 

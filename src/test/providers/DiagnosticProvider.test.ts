@@ -24,7 +24,7 @@ const DiagnosticDelay = 10;
 describe('DiagnosticProvider', () => {
     let testConnection: TestConnection;
     let noDiagnosticsTestConnection: TestConnection;
-    before('Prepare a language server for testing (with added diagnostic capability)', async () => {
+    before('Prepare a language server for testing (with added diagnostic capability)', () => {
         const initParams: InitializeParams = {
             ...DefaultInitializeParams,
             ...{ initializationOptions: { diagnosticDelay: DiagnosticDelay } },
@@ -107,7 +107,7 @@ services:
         });
     });
 
-    describe('Custom Tags', async () => {
+    describe('Custom Tags', () => {
         it('Should provide nothing for valid compose documents with known custom tags', async () => {
             const validComposeWithTags = `version: '123'
 
@@ -153,7 +153,7 @@ services:
     });
 });
 
-async function awaitDiagnosticsAndCompare(testConnection: TestConnection, testObject: string | unknown, expected: ExpectedDiagnostic[] | undefined): Promise<void> {
+async function awaitDiagnosticsAndCompare(testConnection: TestConnection, testObject: unknown, expected: ExpectedDiagnostic[] | undefined): Promise<void> {
     let timeout: NodeJS.Timeout | undefined = undefined;
 
     try {
@@ -174,7 +174,7 @@ async function awaitDiagnosticsAndCompare(testConnection: TestConnection, testOb
 
         // A promise that will reject if it times out (if the diagnostics never get sent)
         const failurePromise = new Promise<never>((resolve, reject) => {
-            timeout = setTimeout(() => reject('timed out awaiting diagnostic response'), DiagnosticDelay * 10); // This carries some risk of test fragility but we have to draw a line somewhere (*sigh* halting problem)
+            timeout = setTimeout(() => reject(new Error('timed out awaiting diagnostic response')), DiagnosticDelay * 10); // This carries some risk of test fragility but we have to draw a line somewhere (*sigh* halting problem)
         });
 
         // Now await the listener's completion promise to get the result
