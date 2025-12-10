@@ -4,14 +4,19 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import type { ClientCapabilities, FeatureState, StaticFeature } from 'vscode-languageclient';
+import type { ClientCapabilities, DocumentSelector, FeatureState, InitializeParams, ServerCapabilities, StaticFeature } from 'vscode-languageclient';
 import type { LanguageClient } from 'vscode-languageclient/node';
-import type { DocumentSettings, DocumentSettingsClientCapabilities, DocumentSettingsNotificationParams, DocumentSettingsParams } from '../../../lib/client/DocumentSettings'; // Dev-time-only imports, with `require` below for the real imports, to avoid desync issues or needing to actually install the langserver package
+import type { DocumentSettings, DocumentSettingsClientCapabilities, DocumentSettingsNotificationParams, DocumentSettingsParams } from '../../../dist/esm/client/DocumentSettings'; // Dev-time-only imports, with `require` below for the real imports, to avoid desync issues or needing to actually install the langserver package
 
 export class DocumentSettingsClientFeature implements StaticFeature, vscode.Disposable {
     private disposables: vscode.Disposable[] = [];
 
     public constructor(private readonly client: LanguageClient) { }
+    fillInitializeParams?: ((params: InitializeParams) => void) | undefined;
+    preInitialize?: ((capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined) => void) | undefined;
+    clear(): void {
+        throw new Error('Method not implemented.');
+    }
 
     public getState(): FeatureState {
         return {
@@ -25,6 +30,7 @@ export class DocumentSettingsClientFeature implements StaticFeature, vscode.Disp
             request: true,
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         capabilities.experimental = {
             ...capabilities.experimental,
             documentSettings: docSettingsClientCapabilities,
@@ -32,9 +38,13 @@ export class DocumentSettingsClientFeature implements StaticFeature, vscode.Disp
     }
 
     public initialize(): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
+        const documentSettings: typeof import('../../../dist/esm/client/DocumentSettings') = require('../../../../dist/cjs/client/DocumentSettings');
+
+
         this.disposables.push(
             this.client.onRequest(
-                require('../../../../lib/client/DocumentSettings').DocumentSettingsRequest.method,
+                documentSettings.DocumentSettingsRequest.method,
                 (params: DocumentSettingsParams): DocumentSettings | undefined => {
                     const textEditor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === params.textDocument.uri);
 
@@ -59,13 +69,13 @@ export class DocumentSettingsClientFeature implements StaticFeature, vscode.Disp
                         tabSize: Number(e.options.tabSize),
                     };
 
-                    this.client.sendNotification(require('../../../../lib/client/DocumentSettings').DocumentSettingsNotification.method, params);
+                    void this.client.sendNotification(documentSettings.DocumentSettingsNotification.method, params);
                 }
             )
         );
     }
 
     public dispose(): void {
-        this.disposables.forEach(d => d.dispose());
+        this.disposables.forEach(d => void d.dispose());
     }
 }

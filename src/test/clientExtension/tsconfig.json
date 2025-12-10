@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
-        "target": "es2018",
-        "module": "commonjs",
+        "target": "es2022",
         "lib": [
-            "es2018",
+            "es2022",
         ],
-        "moduleResolution": "node",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "sourceMap": true,
         "inlineSources": false,
         "declaration": true,

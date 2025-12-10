@@ -3,15 +3,20 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type { AlternateYamlLanguageServiceClientCapabilities } from '../../../lib/client/AlternateYamlLanguageServiceClientCapabilities';
+import type { AlternateYamlLanguageServiceClientCapabilities } from '../../../dist/esm/client/AlternateYamlLanguageServiceClientCapabilities';
 import * as vscode from 'vscode';
-import type { ClientCapabilities, FeatureState, StaticFeature } from 'vscode-languageclient';
+import type { ClientCapabilities, DocumentSelector, FeatureState, InitializeParams, ServerCapabilities, StaticFeature } from 'vscode-languageclient';
 
 /**
  * This class will note the features covered by an alternate YAML language service,
  * that the compose language service can disable
  */
 export class AlternateYamlLanguageServiceClientFeature implements StaticFeature, vscode.Disposable {
+    fillInitializeParams?: ((params: InitializeParams) => void) | undefined;
+    preInitialize?: ((capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined) => void) | undefined;
+    clear(): void {
+        throw new Error('Method not implemented.');
+    }
     public getState(): FeatureState {
         return {
             kind: 'static'
@@ -32,6 +37,7 @@ export class AlternateYamlLanguageServiceClientFeature implements StaticFeature,
                 formatting: true,
             };
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             capabilities.experimental = {
                 ...capabilities.experimental,
                 alternateYamlLanguageService: altYamlClientCapabilities,

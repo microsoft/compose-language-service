@@ -9,7 +9,7 @@ import { DocumentSettingsClientFeature } from './DocumentSettingsClientFeature';
 import { AlternateYamlLanguageServiceClientFeature } from './AlternateYamlLanguageServiceClientFeature';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    const serverModule = context.asAbsolutePath('../../../lib/server.js');
+    const serverModule = context.asAbsolutePath('../../../dist/cjs/server.js');
 
     const serverOptions: ServerOptions = {
         run: {
