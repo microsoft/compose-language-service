@@ -612,17 +612,17 @@ describe('ComposeDocument', () => {
             });
 
             it('Should give lines correctly for numeric inputs', () => {
-                sharedComposeDocument.lineAt(0).should.equal('version: \'3.4\'\n');
-                sharedComposeDocument.lineAt(1).should.equal('\n');
-                sharedComposeDocument.lineAt(2).should.equal('# This line is a comment\n');
-                sharedComposeDocument.lineAt(17).should.equal('        volumes: # With a bonus comment\n');
+                sharedComposeDocument.lineAt(0).should.equal('version: \'3.4\'');
+                sharedComposeDocument.lineAt(1).should.equal('');
+                sharedComposeDocument.lineAt(2).should.equal('# This line is a comment');
+                sharedComposeDocument.lineAt(17).should.equal('        volumes: # With a bonus comment');
             });
 
             it('Should give lines correctly for position inputs', () => {
-                sharedComposeDocument.lineAt(Position.create(0, 0)).should.equal('version: \'3.4\'\n');
-                sharedComposeDocument.lineAt(Position.create(1, 111)).should.equal('\n'); // 111 should round backward to the end of this line
-                sharedComposeDocument.lineAt(Position.create(2, 4)).should.equal('# This line is a comment\n');
-                sharedComposeDocument.lineAt(Position.create(17, 0)).should.equal('        volumes: # With a bonus comment\n');
+                sharedComposeDocument.lineAt(Position.create(0, 0)).should.equal('version: \'3.4\'');
+                sharedComposeDocument.lineAt(Position.create(1, 111)).should.equal(''); // 111 should round backward to the end of this line
+                sharedComposeDocument.lineAt(Position.create(2, 4)).should.equal('# This line is a comment');
+                sharedComposeDocument.lineAt(Position.create(17, 0)).should.equal('        volumes: # With a bonus comment');
             });
         });
 
