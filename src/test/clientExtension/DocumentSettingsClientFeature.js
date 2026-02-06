@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 const vscode = require('vscode');
-const documentSettings = require('../../../dist/cjs/client/DocumentSettings');
+const documentSettings = require('../../../dist/cjs/common/DocumentSettingsClientCapabilities');
 
 class DocumentSettingsClientFeature {
     constructor(client) {
