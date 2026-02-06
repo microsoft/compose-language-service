@@ -29,6 +29,11 @@
             "import": "./dist/esm/client/index.js",
             "require": "./dist/cjs/client/index.js",
             "types": "./dist/esm/client/index.d.ts"
+        },
+        "./vscode": {
+            "import": "./dist/esm/vscode/index.js",
+            "require": "./dist/cjs/vscode/index.js",
+            "types": "./dist/esm/vscode/index.d.ts"
         }
     },
     "bin": {
@@ -47,13 +52,23 @@
     },
     "devDependencies": {
         "@microsoft/vscode-azext-eng": "1.0.0-alpha.12",
-        "@types/node": "22.x"
+        "@types/node": "22.x",
+        "@types/vscode": "1.105.0",
+        "vscode-languageclient": "*"
     },
     "dependencies": {
         "vscode-languageserver": "^10.0.0-next.16",
         "vscode-languageserver-protocol": "^3.17.6-next.16",
         "vscode-languageserver-textdocument": "^1.0.12",
         "yaml": "^2.8.2"
+    },
+    "peerDependencies": {
+        "vscode-languageclient": "^10.0.0-next.19"
+    },
+    "peerDependenciesMeta": {
+        "vscode-languageclient": {
+            "optional": true
+        }
     },
     "mocha": {
         "node-option": [
