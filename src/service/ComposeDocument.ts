@@ -6,7 +6,7 @@
 import { ErrorCodes, Position, Range, ResponseError, TextDocumentIdentifier, TextDocumentsConfiguration } from 'vscode-languageserver';
 import { DocumentUri, TextDocument } from 'vscode-languageserver-textdocument';
 import { Document as YamlDocument, isDocument, Node as YamlNode, parseDocument, ScalarTag, Tags } from 'yaml';
-import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequest, LF } from '../client/DocumentSettings';
+import { CRLF, DocumentSettings, DocumentSettingsParams, DocumentSettingsRequest, LF } from '../common/DocumentSettingsClientCapabilities';
 import { ExtendedPositionParams, PositionInfo } from './ExtendedParams';
 import { getCurrentContext } from './utils/ActionContext';
 import { Lazy } from './utils/Lazy';
