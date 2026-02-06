@@ -7,7 +7,7 @@
 
 import { type DocumentSettings, type DocumentSettingsClientCapabilities, DocumentSettingsNotification, type DocumentSettingsNotificationParams, type DocumentSettingsParams, DocumentSettingsRequest } from '../common/DocumentSettingsClientCapabilities';
 import * as vscode from 'vscode';
-import type { ClientCapabilities, FeatureState, LanguageClient, StaticFeature } from 'vscode-languageclient';
+import type { ClientCapabilities, FeatureState, LanguageClient, StaticFeature } from 'vscode-languageclient/node';
 
 /**
  * This class implements functionality to allow the language server to request information about an open document (including tab size and line endings), and also

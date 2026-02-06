@@ -5,7 +5,7 @@
 
 import type { AlternateYamlLanguageServiceClientCapabilities } from '../common/AlternateYamlLanguageServiceClientCapabilities';
 import * as vscode from 'vscode';
-import type { ClientCapabilities, FeatureState, StaticFeature } from 'vscode-languageclient';
+import type { ClientCapabilities, FeatureState, StaticFeature } from 'vscode-languageclient/node';
 
 /**
  * This class will note the features covered by an alternate YAML language service,
