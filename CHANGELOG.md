@@ -7,9 +7,6 @@
 * An entrypoint was added for `vscode`. This is intended for use by VS Code in particular to help with interacting with this language service.
 * An ESM build of the entire package is now included, in addition to the prior CJS build.
 
-### Changed
-* `vscode-languageclient` is added as an optional peer dependency. It is not necessary for other clients to install it (unless using the `vscode` entrypoint), but VS Code extensions can use it.
-
 ## 0.4.0 - 17 April 2025
 ### Breaking Changes
 * The service startup CodeLens has changed the command it will call to `vscode-containers.compose.up`.

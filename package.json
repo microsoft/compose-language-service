@@ -54,21 +54,13 @@
         "@microsoft/vscode-azext-eng": "1.0.0-alpha.12",
         "@types/node": "22.x",
         "@types/vscode": "1.105.0",
-        "vscode-languageclient": "*"
+        "vscode-languageclient": "^10.0.0-next.19"
     },
     "dependencies": {
         "vscode-languageserver": "^10.0.0-next.16",
         "vscode-languageserver-protocol": "^3.17.6-next.16",
         "vscode-languageserver-textdocument": "^1.0.12",
         "yaml": "^2.8.2"
-    },
-    "peerDependencies": {
-        "vscode-languageclient": "^10.0.0-next.19"
-    },
-    "peerDependenciesMeta": {
-        "vscode-languageclient": {
-            "optional": true
-        }
     },
     "mocha": {
         "node-option": [
