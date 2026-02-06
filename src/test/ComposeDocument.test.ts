@@ -58,7 +58,7 @@ describe('ComposeDocument', () => {
         testConnection = new TestConnection(initParams);
 
         // Set up a client listener to respond to doc settings requests
-        testConnection.client.onRequest(DocumentSettingsRequest.method, (params) => {
+        testConnection.client.onRequest(DocumentSettingsRequest.type, (params) => {
             return {
                 eol: LF,
                 tabSize: 4,
@@ -655,7 +655,7 @@ describe('ComposeDocument', () => {
                 (sharedComposeDocument as any).documentSettings = undefined;
 
                 const requestPromise = new Promise<void>((resolve, reject) => {
-                    testConnection.client.onRequest(DocumentSettingsRequest.method, (params) => {
+                    testConnection.client.onRequest(DocumentSettingsRequest.type, (params) => {
                         resolve();
                         return {
                             eol: LF,
