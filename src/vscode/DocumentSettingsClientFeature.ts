@@ -62,14 +62,14 @@ export class DocumentSettingsClientFeature implements StaticFeature, vscode.Disp
 
         this.disposables.push(
             vscode.window.onDidChangeTextEditorOptions(
-                async (e: vscode.TextEditorOptionsChangeEvent) => {
+                (e: vscode.TextEditorOptionsChangeEvent) => {
                     const params: DocumentSettingsNotificationParams = {
                         textDocument: { uri: e.textEditor.document.uri.toString() },
                         eol: e.textEditor.document.eol,
                         tabSize: Number(e.options.tabSize),
                     };
 
-                    await this.client.sendNotification(DocumentSettingsNotification.type, params);
+                    void this.client.sendNotification(DocumentSettingsNotification.type, params);
                 }
             )
         );
