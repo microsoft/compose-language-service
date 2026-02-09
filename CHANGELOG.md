@@ -1,4 +1,4 @@
-## 0.5.0 - 6 February 2026
+## 0.5.0 - 9 February 2026
 ### Breaking Changes
 * `TelemetryEvent`, `AlternateYamlLanguageServiceClientCapabilities`, and `DocumentSettings*` types have moved from `lib/client/*` to `@microsoft/compose-language-service/client`.
 
