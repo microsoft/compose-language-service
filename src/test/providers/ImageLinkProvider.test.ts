@@ -139,6 +139,80 @@ services:
             await requestImageLinksAndCompare(testConnection, uri, expected);
         });
 
+        it('Should provide links for GitHub Container Registry images', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'ghcr.io/microsoft/playwright-mcp'
+                    },
+                    b: {
+                        image: 'ghcr.io/owner/repo:v1.2.3'
+                    },
+                }
+            };
+
+            const expected = [
+                {
+                    range: Range.create(2, 11, 2, 43),
+                    target: 'https://github.com/microsoft/playwright-mcp/pkgs/container/playwright-mcp'
+                },
+                {
+                    range: Range.create(4, 11, 4, 29),
+                    target: 'https://github.com/owner/repo/pkgs/container/repo'
+                },
+            ];
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, expected);
+        });
+
+        it('Should provide links for Quay.io images', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'quay.io/prometheus/node-exporter'
+                    },
+                    b: {
+                        image: 'quay.io/coreos/etcd:v3.5.0'
+                    },
+                }
+            };
+
+            const expected = [
+                {
+                    range: Range.create(2, 11, 2, 43),
+                    target: 'https://quay.io/repository/prometheus/node-exporter'
+                },
+                {
+                    range: Range.create(4, 11, 4, 30),
+                    target: 'https://quay.io/repository/coreos/etcd'
+                },
+            ];
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, expected);
+        });
+
+        it('Should NOT provide links for unrecognized private registries', async () => {
+            // Reproduces the scenario reported in https://github.com/microsoft/compose-language-service/issues/179
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'nrt.vultrcr.com/wulicoco/code-sync'
+                    },
+                    b: {
+                        image: 'localhost:5000/myimg'
+                    },
+                    c: {
+                        image: 'registry.gitlab.com/group/project/image'
+                    },
+                }
+            };
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, []);
+        });
+
         it('Should NOT provide links for services with `build` section', async () => {
             const testObject = {
                 services: {
