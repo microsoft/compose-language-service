@@ -162,6 +162,12 @@ services:
                     b: {
                         image: 'foo:1234/alpine'
                     },
+                    c: {
+                        image: 'localhost/alpine'
+                    },
+                    d: {
+                        image: 'nrt.vultrcr.com/wulicoco/code-sync'
+                    },
                 }
             };
 

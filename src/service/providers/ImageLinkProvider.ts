@@ -51,43 +51,67 @@ export class ImageLinkProvider extends ProviderBase<DocumentLinkParams & Extende
     }
 
     private static getLinkForImage(image: string, imageTypes: Set<string>): { uri: string, start: number, length: number } | undefined {
-        let match: RegExpExecArray | null;
-        let namespace: string | undefined;
-        let imageName: string | undefined;
+        const parts = image.split('/');
+        
+        if (parts.length === 1) {
+            let match: RegExpExecArray | null;
+            let imageName: string | undefined;
+            if ((match = dockerHubImageRegex.exec(image)) &&
+                (imageName = match.groups?.imageName)) {
 
-        if ((match = dockerHubImageRegex.exec(image)) &&
-            (imageName = match.groups?.imageName)) {
+                imageTypes.add('dockerHub');
 
-            imageTypes.add('dockerHub');
-
-            return {
-                uri: `https://hub.docker.com/_/${imageName}`,
-                start: match.index,
-                length: imageName.length
-            };
-        } else if ((match = dockerHubNamespacedImageRegex.exec(image)) &&
-            (namespace = match.groups?.namespace) &&
-            (imageName = match.groups?.imageName)) {
-
-            imageTypes.add('dockerHubNamespaced');
-
-            return {
-                uri: `https://hub.docker.com/r/${namespace}/${imageName}`,
-                start: match.index,
-                length: namespace.length + 1 + imageName.length // 1 is the length of the '/' after namespace
-            };
-        } else if ((match = mcrImageRegex.exec(image)) &&
-            (namespace = match.groups?.namespace?.replace(/\/$/, '')) &&
-            (imageName = match.groups?.imageName)) {
-
-            imageTypes.add('mcr');
-
-            return {
-                uri: `https://hub.docker.com/_/microsoft-${namespace.replace('/', '-')}-${imageName}`,
-                start: match.index,
-                length: 18 + namespace.length + 1 + imageName.length // 18 is the length of 'mcr.microsoft.com/', 1 is the length of the '/' after namespace
-            };
+                return {
+                    uri: `https://hub.docker.com/_/${imageName}`,
+                    start: match.index,
+                    length: imageName.length
+                };
+            }
+            return undefined;
         }
+
+        const firstPart = parts[0];
+        const isRegistry = firstPart.includes('.') || firstPart.includes(':') || firstPart === 'localhost';
+
+        if (isRegistry) {
+            if (firstPart === 'mcr.microsoft.com') {
+                let match: RegExpExecArray | null;
+                let namespace: string | undefined;
+                let imageName: string | undefined;
+                if ((match = mcrImageRegex.exec(image)) &&
+                    (namespace = match.groups?.namespace?.replace(/\/$/, '')) &&
+                    (imageName = match.groups?.imageName)) {
+
+                    imageTypes.add('mcr');
+
+                    return {
+                        uri: `https://hub.docker.com/_/microsoft-${namespace.replace('/', '-')}-${imageName}`,
+                        start: match.index,
+                        length: 18 + namespace.length + 1 + imageName.length // 18 is the length of 'mcr.microsoft.com/', 1 is the length of the '/' after namespace
+                    };
+                }
+            }
+            return undefined;
+        }
+
+        if (parts.length === 2) {
+            let match: RegExpExecArray | null;
+            let namespace: string | undefined;
+            let imageName: string | undefined;
+            if ((match = dockerHubNamespacedImageRegex.exec(image)) &&
+                (namespace = match.groups?.namespace) &&
+                (imageName = match.groups?.imageName)) {
+
+                imageTypes.add('dockerHubNamespaced');
+
+                return {
+                    uri: `https://hub.docker.com/r/${namespace}/${imageName}`,
+                    start: match.index,
+                    length: namespace.length + 1 + imageName.length // 1 is the length of the '/' after namespace
+                };
+            }
+        }
+
         return undefined;
     }
 }
