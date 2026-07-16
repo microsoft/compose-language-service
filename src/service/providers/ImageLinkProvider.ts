@@ -14,6 +14,11 @@ import { ProviderBase } from './ProviderBase';
 // Hostnames may include dots; repository names may include dots, underscores, dashes.
 const PATH_COMPONENT_REGEX = /^[\w][.\w-]*$/;
 const TAG_REGEX = /^[.\w-]+$/;
+const DIGEST_REGEX = /^[\w.+-]+:[0-9a-f]+$/i;
+
+// Docker Hub's explicit registry hostnames. A reference using any of these is treated
+// the same as a bare Docker Hub reference (e.g. `docker.io/library/alpine` === `library/alpine`).
+const DOCKER_HUB_REGISTRIES = new Set(['docker.io', 'index.docker.io', 'registry-1.docker.io']);
 
 interface ParsedImageRef {
     /** Registry hostname (e.g. 'ghcr.io', 'mcr.microsoft.com'), or undefined for Docker Hub. */
@@ -30,12 +35,14 @@ interface ParsedImageRef {
 
 /**
  * A path component before the first `/` is treated as a registry hostname iff it
- * contains a `.` (domain), contains a `:` (host:port), or is exactly `localhost`.
- * This matches Docker's reference resolution rules.
+ * contains a `.` (domain), contains a `:` (host:port), is exactly `localhost`, or
+ * contains an uppercase character (repository namespaces are always lowercase, so an
+ * uppercase first component signals a registry host). This matches Docker's reference
+ * resolution rules.
  * @see https://github.com/distribution/reference
  */
 function isRegistryHost(component: string): boolean {
-    return component.includes('.') || component.includes(':') || component === 'localhost';
+    return component.includes('.') || component.includes(':') || component === 'localhost' || component !== component.toLowerCase();
 }
 
 export function parseImageRef(image: string): ParsedImageRef | undefined {
@@ -43,12 +50,22 @@ export function parseImageRef(image: string): ParsedImageRef | undefined {
         return undefined;
     }
 
+    // Split off an optional @digest suffix first (e.g. `@sha256:...`). The digest never
+    // forms part of the link target, so it is validated then dropped.
+    const atIndex = image.indexOf('@');
+    const digest = atIndex >= 0 ? image.substring(atIndex + 1) : undefined;
+    const ref = atIndex >= 0 ? image.substring(0, atIndex) : image;
+
+    if (digest !== undefined && !DIGEST_REGEX.test(digest)) {
+        return undefined;
+    }
+
     // Split off optional :tag — the tag is the suffix after the last ':' in the
     // final '/'-separated component (so a ':' inside a registry host:port portion
     // is not mistaken for a tag separator).
-    const lastSlash = image.lastIndexOf('/');
-    const nameAndTag = lastSlash >= 0 ? image.substring(lastSlash + 1) : image;
-    const pathPrefix = lastSlash >= 0 ? image.substring(0, lastSlash) : '';
+    const lastSlash = ref.lastIndexOf('/');
+    const nameAndTag = lastSlash >= 0 ? ref.substring(lastSlash + 1) : ref;
+    const pathPrefix = lastSlash >= 0 ? ref.substring(0, lastSlash) : '';
 
     const tagColon = nameAndTag.indexOf(':');
     const imageName = tagColon >= 0 ? nameAndTag.substring(0, tagColon) : nameAndTag;
@@ -61,7 +78,9 @@ export function parseImageRef(image: string): ParsedImageRef | undefined {
         return undefined;
     }
 
-    const pathLength = image.length - (tag !== undefined ? tag.length + 1 : 0);
+    // The link covers the registry/namespace/name path only — excluding both the
+    // :tag and @digest suffixes.
+    const pathLength = ref.length - (tag !== undefined ? tag.length + 1 : 0);
 
     const pathParts = pathPrefix ? pathPrefix.split('/') : [];
 
@@ -99,11 +118,18 @@ export function parseImageRef(image: string): ParsedImageRef | undefined {
 }
 
 function buildLinkUri(ref: ParsedImageRef, imageTypes: Set<string>): string | undefined {
-    // Docker Hub — no registry hostname in the reference.
-    if (ref.registry === undefined) {
+    // Registry hostnames are case-insensitive; normalize before matching known registries.
+    const registry = ref.registry?.toLowerCase();
+
+    // Docker Hub — either no registry hostname in the reference, or one of Docker Hub's
+    // explicit hostnames. Docker Hub only supports a single namespace level, so skip deeper paths.
+    if (registry === undefined || DOCKER_HUB_REGISTRIES.has(registry)) {
         if (ref.namespace === undefined) {
             imageTypes.add('dockerHub');
             return `https://hub.docker.com/_/${ref.imageName}`;
+        }
+        if (ref.namespace.includes('/')) {
+            return undefined;
         }
         imageTypes.add('dockerHubNamespaced');
         return `https://hub.docker.com/r/${ref.namespace}/${ref.imageName}`;
@@ -111,20 +137,20 @@ function buildLinkUri(ref: ParsedImageRef, imageTypes: Set<string>): string | un
 
     // Microsoft Container Registry — images are mirrored to a Docker Hub page
     // under the `microsoft-<namespace>-<name>` convention.
-    if (ref.registry === 'mcr.microsoft.com' && ref.namespace !== undefined) {
+    if (registry === 'mcr.microsoft.com' && ref.namespace !== undefined) {
         imageTypes.add('mcr');
         return `https://hub.docker.com/_/microsoft-${ref.namespace.replace(/\//g, '-')}-${ref.imageName}`;
     }
 
     // GitHub Container Registry — link to the package page on github.com.
     // Only the `ghcr.io/<owner>/<package>` form maps cleanly; deeper paths are skipped.
-    if (ref.registry === 'ghcr.io' && ref.namespace !== undefined && !ref.namespace.includes('/')) {
+    if (registry === 'ghcr.io' && ref.namespace !== undefined && !ref.namespace.includes('/')) {
         imageTypes.add('ghcr');
         return `https://github.com/${ref.namespace}/${ref.imageName}/pkgs/container/${ref.imageName}`;
     }
 
     // Quay.io — link to the public repository page.
-    if (ref.registry === 'quay.io' && ref.namespace !== undefined && !ref.namespace.includes('/')) {
+    if (registry === 'quay.io' && ref.namespace !== undefined && !ref.namespace.includes('/')) {
         imageTypes.add('quay');
         return `https://quay.io/repository/${ref.namespace}/${ref.imageName}`;
     }

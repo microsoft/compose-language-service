@@ -193,6 +193,112 @@ services:
             await requestImageLinksAndCompare(testConnection, uri, expected);
         });
 
+        it('Should provide links for explicit Docker Hub registry hostnames', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'docker.io/library/alpine'
+                    },
+                    b: {
+                        image: 'docker.io/alpine'
+                    },
+                    c: {
+                        image: 'index.docker.io/someuser/someimage:1.0'
+                    },
+                }
+            };
+
+            const expected = [
+                {
+                    range: Range.create(2, 11, 2, 35),
+                    target: 'https://hub.docker.com/r/library/alpine'
+                },
+                {
+                    range: Range.create(4, 11, 4, 27),
+                    target: 'https://hub.docker.com/_/alpine'
+                },
+                {
+                    range: Range.create(6, 11, 6, 45),
+                    target: 'https://hub.docker.com/r/someuser/someimage'
+                },
+            ];
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, expected);
+        });
+
+        it('Should provide links for digest-pinned images, excluding the digest from the link range', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'alpine@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+                    },
+                    b: {
+                        image: 'ghcr.io/owner/repo@sha256:abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd'
+                    },
+                    c: {
+                        image: 'redis:7@sha256:fedcbafedcbafedcbafedcbafedcbafedcbafedcbafedcbafedcbafedcbafedc'
+                    },
+                }
+            };
+
+            const expected = [
+                {
+                    range: Range.create(2, 11, 2, 17),
+                    target: 'https://hub.docker.com/_/alpine'
+                },
+                {
+                    range: Range.create(4, 11, 4, 29),
+                    target: 'https://github.com/owner/repo/pkgs/container/repo'
+                },
+                {
+                    range: Range.create(6, 11, 6, 16),
+                    target: 'https://hub.docker.com/_/redis'
+                },
+            ];
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, expected);
+        });
+
+        it('Should provide links for registry hostnames case-insensitively', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'MCR.microsoft.com/dotnet/sdk'
+                    },
+                }
+            };
+
+            const expected = [
+                {
+                    range: Range.create(2, 11, 2, 39),
+                    target: 'https://hub.docker.com/_/microsoft-dotnet-sdk'
+                },
+            ];
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, expected);
+        });
+
+        it('Should NOT link an uppercase first component to Docker Hub', async () => {
+            // An uppercase first component is a registry host per Docker's rules (namespaces are
+            // always lowercase), so it must not be mistaken for a Docker Hub namespace.
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'MyRegistry.example/foo'
+                    },
+                    b: {
+                        image: 'MyRegistry/foo'
+                    },
+                }
+            };
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, []);
+        });
+
         it('Should NOT provide links for unrecognized private registries', async () => {
             // Reproduces the scenario reported in https://github.com/microsoft/compose-language-service/issues/179
             const testObject = {
@@ -407,7 +513,7 @@ async function requestImageLinksAndCompare(testConnection: TestConnection, uri: 
 
     if (expected.length > 0) {
         result.should.not.be.empty;
-        result.should.deep.include.members(expected);
+        result.should.have.deep.members(expected);
     } else {
         result.should.be.empty;
     }
