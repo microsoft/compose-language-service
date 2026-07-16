@@ -256,6 +256,42 @@ services:
             await requestImageLinksAndCompare(testConnection, uri, []);
         });
 
+        it('Should NOT provide links for GHCR or Quay images with a deeper namespace', async () => {
+            // GHCR/Quay pages only map cleanly for a single `<owner>/<repo>` form
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'ghcr.io/owner/team/repo'
+                    },
+                    b: {
+                        image: 'quay.io/org/team/repo:v1.0.0'
+                    },
+                }
+            };
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, []);
+        });
+
+        it('Should NOT provide links for registry images without a namespace', async () => {
+            const testObject = {
+                services: {
+                    a: {
+                        image: 'ghcr.io/repo'
+                    },
+                    b: {
+                        image: 'quay.io/repo'
+                    },
+                    c: {
+                        image: 'mcr.microsoft.com/sdk'
+                    },
+                }
+            };
+
+            const uri = testConnection.sendObjectAsYamlDocument(testObject);
+            await requestImageLinksAndCompare(testConnection, uri, []);
+        });
+
         it('Should NOT provide links for services without image tag', async () => {
             const testObject = {
                 services: {
